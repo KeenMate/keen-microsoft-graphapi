@@ -1,0 +1,11 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users('user-id-1')/calendars",
+  "value": [
+    {
+      "id": "calendar-id-1",
+      "name": "Calendar",
+      "isDefaultCalendar": true,
+      "color": "auto"
+    }
+  ]
+}

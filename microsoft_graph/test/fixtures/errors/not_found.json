@@ -1,0 +1,11 @@
+{
+  "error": {
+    "code": "Request_ResourceNotFound",
+    "message": "Resource 'user-id-999' does not exist.",
+    "innerError": {
+      "date": "2024-01-15T10:30:00",
+      "request-id": "abc-123-def",
+      "client-request-id": "ghi-456-jkl"
+    }
+  }
+}

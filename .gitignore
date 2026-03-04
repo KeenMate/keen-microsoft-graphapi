@@ -1,0 +1,8 @@
+# Project-level
+.elixir_ls/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+NUL

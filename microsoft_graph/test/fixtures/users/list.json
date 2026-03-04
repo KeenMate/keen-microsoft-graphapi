@@ -1,0 +1,17 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users",
+  "value": [
+    {
+      "id": "user-id-1",
+      "displayName": "Alice Smith",
+      "mail": "alice@contoso.com",
+      "userPrincipalName": "alice@contoso.com"
+    },
+    {
+      "id": "user-id-2",
+      "displayName": "Bob Jones",
+      "mail": "bob@contoso.com",
+      "userPrincipalName": "bob@contoso.com"
+    }
+  ]
+}

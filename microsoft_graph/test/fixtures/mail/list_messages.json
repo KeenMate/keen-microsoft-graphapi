@@ -1,0 +1,17 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users('user-id-1')/messages",
+  "value": [
+    {
+      "id": "message-id-1",
+      "subject": "Hello World",
+      "bodyPreview": "Hi there...",
+      "from": {
+        "emailAddress": {
+          "name": "Alice Smith",
+          "address": "alice@contoso.com"
+        }
+      },
+      "receivedDateTime": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
