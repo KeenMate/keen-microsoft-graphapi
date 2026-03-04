@@ -106,43 +106,49 @@ Tracking document for the Phoenix LiveView demo UI.
 
 ## Planned Features
 
-### 1. Response Schema Casting — Pending
+### 1. Response Schema Casting — Done
 
-The `:as` option already works in the library (`Resource` + `Pagination` support it). Remaining work is demo UI integration.
+The `:as` option works end-to-end. Schema casting is wired into the demo UI with a "Cast to struct" checkbox.
 
-- Add `schema` field to `%Entry{}` in `endpoint_catalog.ex` (e.g., `MicrosoftGraph.Schema.User` for user endpoints)
-- Add "Cast to struct" checkbox in Options section of `components.ex`
-- Pass `as: entry.schema` in `api_executor.ex` when checkbox is enabled
+- `schema` field on `%Entry{}` in `endpoint_catalog.ex`
+- "Cast to struct" checkbox in `components.ex`
+- `as: entry.schema` passed in `api_executor.ex` when enabled
 
-### 2. Batch Requests ($batch) — Pending
+### 2. Batch Requests ($batch) — Done
 
-New module: `MicrosoftGraph.Batch`
+Module: `MicrosoftGraph.Batch` with `Batch.Request` struct.
 
 ```elixir
-Batch.request("1", "GET", "/users/user-1")
-Batch.request("2", "POST", "/users", body: %{...}, depends_on: ["1"])
-{:ok, responses} = Batch.execute(requests, client: client)  # POST /$batch, max 20
-Batch.find_response(responses, "1")
+batch =
+  Batch.new()
+  |> Batch.add("1", Users.list_query(query: query, as: User))
+  |> Batch.add("2", Groups.list_query())
+
+{:ok, batch} = Batch.execute(batch, client: client)
+{:ok, response} = Batch.get(batch, "1")
 ```
 
-- Validates max 20 requests per batch
-- Reuses existing auth/retry middleware via `Resource.post`
-- Demo UI: "Batch" group in endpoint catalog, body template is JSON array of requests
+- All resource modules have `_query` variants returning `%Batch.Request{}`
+- Per-request schema casting via `:as`
+- Max 20 requests, `depends_on` for sequential ordering
+- 13 tests
 
-### 3. Delta Queries — Pending
+### 3. Delta Queries — Done
 
-New module: `MicrosoftGraph.Delta`
+Module: `MicrosoftGraph.Delta` with `query/2`, `collect_all/2`, `stream/2`.
 
 ```elixir
-{:ok, %{items, delta_link, next_link}} = Delta.query("/users/delta", client: client)
-{:ok, result} = Delta.collect_all("/users/delta", client: client)  # all pages + deltaLink
-stream = Delta.stream("/users/delta", client: client)               # lazy
+{:ok, page} = Delta.query("/users/delta", client: client)
+{:ok, result} = Delta.collect_all("/users/delta", client: client)
+
+first_page |> Delta.stream(client: client) |> Enum.to_list()
 ```
 
 - Follows `@odata.nextLink` until `@odata.deltaLink` appears
-- Preserves `@removed` items for deletion tracking
-- Convenience: `Users.delta/1`, `Groups.delta/1`
-- Demo UI: "delta" entries under Users and Groups
+- Preserves `@removed` items (skips schema casting for deleted items)
+- Convenience functions on all resource modules: `Users.delta/1`, `Groups.delta/1`, `Groups.members_delta/2`, `Mail.messages_delta/2`, `Mail.folder_messages_delta/3`, `Calendar.events_delta/2`, `Files.drive_delta/2`
+- All convenience functions have `_query` batch variants
+- 10 tests
 
 ### 4. Subscriptions/Webhooks — Pending
 

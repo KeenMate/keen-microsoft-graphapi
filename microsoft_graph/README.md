@@ -150,6 +150,211 @@ all_users = MicrosoftGraph.Pagination.stream(first_page, client: client)
 {:ok, session} = MicrosoftGraph.Files.create_upload_session("drive-id", "path/large.zip")
 ```
 
+## Schema Casting
+
+All resource functions accept an `:as` option to cast responses into typed Elixir structs:
+
+```elixir
+alias MicrosoftGraph.Schema.User
+
+# Single item — returns a struct
+{:ok, user} = MicrosoftGraph.Users.get("user-id", as: User)
+# => %User{id: "abc", display_name: "Alice", mail: "alice@contoso.com", ...}
+
+# List — casts each item in "value"
+{:ok, %{"value" => users}} = MicrosoftGraph.Users.list(as: User)
+# => [%User{}, %User{}, ...]
+
+# Combine with $select — only fetch the fields you need
+query = OData.new() |> OData.select(["id", "displayName", "mail"])
+{:ok, %{"value" => users}} = MicrosoftGraph.Users.list(query: query, as: User)
+# => [%User{id: "abc", display_name: "Alice", mail: "alice@...", job_title: nil, ...}]
+```
+
+Nested objects are recursively cast — e.g., `password_profile` becomes `%PasswordProfile{}`, lists of `assigned_licenses` become `[%AssignedLicense{}]`.
+
+For field projections, define a View module to auto-inject `$select`:
+
+```elixir
+defmodule MyApp.UserSummary do
+  use MicrosoftGraph.View,
+    schema: MicrosoftGraph.Schema.User,
+    fields: [:id, :display_name, :mail]
+end
+
+# Automatically adds $select=id,displayName,mail
+{:ok, %{"value" => users}} = MicrosoftGraph.Users.list(as: MyApp.UserSummary)
+# => [%MyApp.UserSummary{id: "abc", display_name: "Alice", mail: "alice@..."}, ...]
+```
+
+## Batch Requests
+
+Send up to 20 requests in a single HTTP call using JSON batching. Every resource function has a `_query` variant that returns a `%Batch.Request{}` instead of executing immediately:
+
+```elixir
+alias MicrosoftGraph.{Batch, OData, Users, Groups, Calendar}
+alias MicrosoftGraph.Schema.{User, Group, Event}
+
+query = OData.new() |> OData.select(["id", "displayName"]) |> OData.top(5)
+
+{:ok, responses} =
+  Batch.new()
+  |> Batch.add("1", Users.list_query(query: query, as: User))
+  |> Batch.add("2", Groups.get_query("group-id", as: Group))
+  |> Batch.add("3", Calendar.list_events_query("user-id", as: Event))
+  |> Batch.execute(client: client)
+```
+
+Each response is individually accessible and auto-cast to its schema:
+
+```elixir
+%{status: 200, body: %{"value" => users}} = Batch.get(responses, "1")
+# users => [%User{id: "...", display_name: "Alice"}, ...]
+
+%{status: 200, body: group} = Batch.get(responses, "2")
+# group => %Group{id: "...", display_name: "Engineering"}
+```
+
+### Sequential Dependencies
+
+Use `depends_on` to control execution order within a batch:
+
+```elixir
+Batch.new()
+|> Batch.add("1", Users.create_query(%{"displayName" => "New User"}, as: User))
+|> Batch.add("2", Groups.add_member_query("group-id", "new-user-id"), depends_on: ["1"])
+|> Batch.execute(client: client)
+```
+
+### Available `_query` Functions
+
+Every resource function has a corresponding `_query` variant with the same arguments:
+
+| Module | Functions |
+|--------|-----------|
+| `Users` | `list_query`, `get_query`, `create_query`, `update_query`, `delete_query`, `list_direct_reports_query`, `list_member_of_query` |
+| `Groups` | `list_query`, `get_query`, `create_query`, `update_query`, `delete_query`, `list_members_query`, `add_member_query`, `remove_member_query` |
+| `Mail` | `list_messages_query`, `get_message_query`, `send_mail_query`, `create_draft_query`, `delete_message_query`, `list_mail_folders_query`, `list_folder_messages_query` |
+| `Calendar` | `list_events_query`, `get_event_query`, `create_event_query`, `update_event_query`, `delete_event_query`, `calendar_view_query`, `list_calendars_query` |
+| `Files` | `get_drive_query`, `list_root_children_query`, `list_children_query`, `get_item_query`, `get_item_by_path_query`, `download_content_query`, `upload_small_query`, `create_upload_session_query` |
+
+## Delta Queries
+
+Delta queries let you track incremental changes to resources. Instead of fetching the full dataset every time, you get only what changed since your last sync.
+
+### Initial Sync
+
+```elixir
+# Fetch all current users + get a delta_link for future syncs
+{:ok, page} = MicrosoftGraph.Delta.query("/users/delta", client: client)
+# page.items => [all current users]
+# page.delta_link => "https://graph...?$deltatoken=..."
+
+# Store delta_link somewhere persistent (database, ETS, etc.)
+```
+
+### Incremental Sync
+
+```elixir
+# Later, fetch only changes since last sync
+{:ok, changes} = MicrosoftGraph.Delta.query(stored_delta_link, client: client)
+
+for item <- changes.items do
+  case item do
+    %{"@removed" => %{"reason" => reason}} ->
+      # Item was deleted
+      delete_from_local_store(item["id"])
+
+    user ->
+      # Item was created or updated
+      upsert_local_store(user)
+  end
+end
+
+# Store the new delta_link for next sync
+save_delta_link(changes.delta_link)
+```
+
+### Collect All Pages
+
+For initial syncs that span multiple pages, `collect_all/2` follows all `@odata.nextLink` pages automatically:
+
+```elixir
+{:ok, result} = MicrosoftGraph.Delta.collect_all("/users/delta", client: client)
+# result.items => all items across all pages
+# result.delta_link => final delta link for future syncs
+```
+
+### Lazy Streaming
+
+Stream items across pages without loading everything into memory:
+
+```elixir
+{:ok, first_page} = MicrosoftGraph.Delta.query("/users/delta", client: client)
+
+first_page
+|> MicrosoftGraph.Delta.stream(client: client)
+|> Stream.filter(fn item -> item["@removed"] == nil end)
+|> Enum.each(&process_user/1)
+```
+
+### Convenience Functions
+
+Each resource module provides delta shortcuts:
+
+```elixir
+# Users
+{:ok, page} = MicrosoftGraph.Users.delta(client: client)
+
+# Groups
+{:ok, page} = MicrosoftGraph.Groups.delta(client: client)
+
+# Group members
+{:ok, page} = MicrosoftGraph.Groups.members_delta("group-id", client: client)
+
+# Mail messages
+{:ok, page} = MicrosoftGraph.Mail.messages_delta("user-id", client: client)
+
+# Mail folder messages
+{:ok, page} = MicrosoftGraph.Mail.folder_messages_delta("user-id", "folder-id", client: client)
+
+# Calendar events
+{:ok, page} = MicrosoftGraph.Calendar.events_delta("user-id", client: client)
+
+# Drive files
+{:ok, page} = MicrosoftGraph.Files.drive_delta("drive-id", client: client)
+```
+
+### Schema Casting with Delta
+
+Delta queries support `:as` for schema casting. Deleted items (with `@removed`) are kept as raw maps:
+
+```elixir
+{:ok, changes} = MicrosoftGraph.Delta.query(delta_link,
+  client: client,
+  as: MicrosoftGraph.Schema.User
+)
+
+Enum.each(changes.items, fn
+  %MicrosoftGraph.Schema.User{} = user ->
+    IO.puts("Updated: #{user.display_name}")
+
+  %{"@removed" => _} = removed ->
+    IO.puts("Deleted: #{removed["id"]}")
+end)
+```
+
+### Batch Variants
+
+All delta convenience functions have `_query` variants for batch requests:
+
+```elixir
+batch =
+  Batch.new()
+  |> Batch.add("1", Users.delta_query())
+  |> Batch.add("2", Groups.delta_query())
+```
+
 ## Error Handling
 
 All operations return `{:ok, result}`, `:ok`, or `{:error, error}`:
