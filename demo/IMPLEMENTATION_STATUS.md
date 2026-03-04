@@ -150,21 +150,22 @@ first_page |> Delta.stream(client: client) |> Enum.to_list()
 - All convenience functions have `_query` batch variants
 - 10 tests
 
-### 4. Subscriptions/Webhooks — Pending
+### 4. Subscriptions/Webhooks — Done
 
-New modules: `MicrosoftGraph.Subscriptions` + `MicrosoftGraph.Webhook`
+Modules: `MicrosoftGraph.Subscriptions` (CRUD) + `MicrosoftGraph.Webhook` (helpers).
 
 ```elixir
-# Standard CRUD (same pattern as Users/Groups)
-Subscriptions.create(%{"changeType" => "created,updated", "notificationUrl" => ..., "resource" => "users", ...})
-Subscriptions.list() | .get(id) | .renew(id, attrs) | .delete(id)
+# CRUD
+Subscriptions.create(attrs) | .list() | .get(id) | .renew(id, attrs) | .delete(id)
+# All have _query batch variants
 
-# Webhook helpers for your endpoint
-Webhook.classify_request(conn)     # => {:validate, token} | :notification
-Webhook.parse_notifications(body)  # => [%{subscriptionId, changeType, resource, ...}]
+# Webhook helpers
+Webhook.classify(conn)                       # => {:validate, token} | :notification
+Webhook.parse_notifications(body)            # => [notification_map]
+Webhook.valid_client_state?(notification, secret)  # => boolean
 ```
 
-- Demo UI: "Subscriptions" group with 5 entries (create, list, get, renew, delete)
+- 10 subscription tests + 10 webhook tests
 
 ### 5. Schema-Aware OData Filter Builder — Pending
 

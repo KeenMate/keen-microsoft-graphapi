@@ -355,6 +355,78 @@ batch =
   |> Batch.add("2", Groups.delta_query())
 ```
 
+## Subscriptions & Webhooks
+
+Subscriptions let Microsoft Graph push change notifications to your application via webhooks.
+
+### Managing Subscriptions
+
+```elixir
+# Create a subscription
+{:ok, sub} = MicrosoftGraph.Subscriptions.create(%{
+  "changeType" => "created,updated,deleted",
+  "notificationUrl" => "https://example.com/webhook",
+  "resource" => "users",
+  "expirationDateTime" => "2025-04-01T00:00:00Z",
+  "clientState" => "my-secret-state"
+})
+
+# List active subscriptions
+{:ok, %{"value" => subs}} = MicrosoftGraph.Subscriptions.list()
+
+# Get a specific subscription
+{:ok, sub} = MicrosoftGraph.Subscriptions.get("subscription-id")
+
+# Renew before expiration
+{:ok, renewed} = MicrosoftGraph.Subscriptions.renew("subscription-id", %{
+  "expirationDateTime" => "2025-05-01T00:00:00Z"
+})
+
+# Delete
+:ok = MicrosoftGraph.Subscriptions.delete("subscription-id")
+```
+
+### Handling Webhooks
+
+Use `MicrosoftGraph.Webhook` in your endpoint to handle validation and notification requests:
+
+```elixir
+# In your Phoenix controller or Plug router
+def webhook(conn, _params) do
+  case MicrosoftGraph.Webhook.classify(conn) do
+    {:validate, token} ->
+      # Microsoft is verifying your endpoint — echo the token back
+      conn
+      |> put_resp_content_type("text/plain")
+      |> send_resp(200, token)
+
+    :notification ->
+      notifications = MicrosoftGraph.Webhook.parse_notifications(conn.body_params)
+
+      for n <- notifications do
+        # Validate clientState to prevent spoofing
+        if MicrosoftGraph.Webhook.valid_client_state?(n, "my-secret-state") do
+          MyApp.NotificationWorker.enqueue(n)
+        end
+      end
+
+      # Must respond within 3 seconds
+      send_resp(conn, 202, "")
+  end
+end
+```
+
+### Batch Variants
+
+All subscription functions have `_query` variants:
+
+```elixir
+batch =
+  Batch.new()
+  |> Batch.add("1", Subscriptions.list_query())
+  |> Batch.add("2", Subscriptions.create_query(%{"resource" => "users", ...}))
+```
+
 ## Error Handling
 
 All operations return `{:ok, result}`, `:ok`, or `{:error, error}`:
