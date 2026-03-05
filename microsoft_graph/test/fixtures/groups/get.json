@@ -1,8 +1,0 @@
-{
-  "id": "group-id-1",
-  "displayName": "Engineering",
-  "description": "Engineering team",
-  "groupTypes": ["Unified"],
-  "mailEnabled": true,
-  "securityEnabled": false
-}
