@@ -23,9 +23,7 @@ defmodule MicrosoftGraph.Mail do
   Lists messages in a user's mailbox.
   """
   @spec list_messages(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def list_messages(user_id, opts \\ []) do
-    Resource.get("/users/#{user_id}/messages", opts)
-  end
+  def list_messages(user_id, opts \\ []), do: Resource.execute(list_messages_query(user_id, opts), opts)
 
   @doc "Batch query variant of `list_messages/2`."
   @spec list_messages_query(String.t(), keyword()) :: Batch.Request.t()
@@ -35,9 +33,7 @@ defmodule MicrosoftGraph.Mail do
   Gets a specific message.
   """
   @spec get_message(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def get_message(user_id, message_id, opts \\ []) do
-    Resource.get("/users/#{user_id}/messages/#{message_id}", opts)
-  end
+  def get_message(user_id, message_id, opts \\ []), do: Resource.execute(get_message_query(user_id, message_id, opts), opts)
 
   @doc "Batch query variant of `get_message/3`."
   @spec get_message_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
@@ -52,16 +48,7 @@ defmodule MicrosoftGraph.Mail do
   An optional `save_to_sent_items` boolean can be passed (default: true).
   """
   @spec send_mail(String.t(), map(), keyword()) :: :ok | {:error, term()}
-  def send_mail(user_id, message, opts \\ []) do
-    {save, opts} = Keyword.pop(opts, :save_to_sent_items, true)
-
-    body = %{
-      "message" => stringify_keys(message),
-      "saveToSentItems" => save
-    }
-
-    Resource.post("/users/#{user_id}/sendMail", body, opts)
-  end
+  def send_mail(user_id, message, opts \\ []), do: Resource.execute(send_mail_query(user_id, message, opts), opts)
 
   @doc "Batch query variant of `send_mail/3`."
   @spec send_mail_query(String.t(), map(), keyword()) :: Batch.Request.t()
@@ -75,9 +62,7 @@ defmodule MicrosoftGraph.Mail do
   Creates a draft message in the user's Drafts folder.
   """
   @spec create_draft(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
-  def create_draft(user_id, message, opts \\ []) do
-    Resource.post("/users/#{user_id}/messages", stringify_keys(message), opts)
-  end
+  def create_draft(user_id, message, opts \\ []), do: Resource.execute(create_draft_query(user_id, message, opts), opts)
 
   @doc "Batch query variant of `create_draft/3`."
   @spec create_draft_query(String.t(), map(), keyword()) :: Batch.Request.t()
@@ -89,9 +74,7 @@ defmodule MicrosoftGraph.Mail do
   Deletes a message.
   """
   @spec delete_message(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
-  def delete_message(user_id, message_id, opts \\ []) do
-    Resource.delete("/users/#{user_id}/messages/#{message_id}", opts)
-  end
+  def delete_message(user_id, message_id, opts \\ []), do: Resource.execute(delete_message_query(user_id, message_id, opts), opts)
 
   @doc "Batch query variant of `delete_message/3`."
   @spec delete_message_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
@@ -103,9 +86,7 @@ defmodule MicrosoftGraph.Mail do
   Lists mail folders for a user.
   """
   @spec list_mail_folders(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def list_mail_folders(user_id, opts \\ []) do
-    Resource.get("/users/#{user_id}/mailFolders", opts)
-  end
+  def list_mail_folders(user_id, opts \\ []), do: Resource.execute(list_mail_folders_query(user_id, opts), opts)
 
   @doc "Batch query variant of `list_mail_folders/2`."
   @spec list_mail_folders_query(String.t(), keyword()) :: Batch.Request.t()
@@ -116,9 +97,7 @@ defmodule MicrosoftGraph.Mail do
   """
   @spec list_folder_messages(String.t(), String.t(), keyword()) ::
           {:ok, map()} | {:error, term()}
-  def list_folder_messages(user_id, folder_id, opts \\ []) do
-    Resource.get("/users/#{user_id}/mailFolders/#{folder_id}/messages", opts)
-  end
+  def list_folder_messages(user_id, folder_id, opts \\ []), do: Resource.execute(list_folder_messages_query(user_id, folder_id, opts), opts)
 
   @doc "Batch query variant of `list_folder_messages/3`."
   @spec list_folder_messages_query(String.t(), String.t(), keyword()) :: Batch.Request.t()

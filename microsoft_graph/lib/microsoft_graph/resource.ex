@@ -20,6 +20,35 @@ defmodule MicrosoftGraph.Resource do
   end
 
   @doc """
+  Executes a `%Batch.Request{}` as a real HTTP call.
+
+  The request struct provides method, URL, body, query, and schema casting.
+  Remaining options (`:client`, `:access_token`, `:api_version`, `:params`)
+  are taken from `opts`.
+
+  This is the bridge between `_query` builders and actual HTTP execution,
+  used internally by resource modules so the `_query` function is the
+  single source of truth for each endpoint's URL, method, and body.
+  """
+  @spec execute(MicrosoftGraph.Batch.Request.t(), keyword()) ::
+          {:ok, map()} | :ok | {:error, term()}
+  def execute(%MicrosoftGraph.Batch.Request{} = req, opts \\ []) do
+    # Use as/query from the request (canonical source), keep the rest from opts
+    opts =
+      opts
+      |> Keyword.drop([:as, :query])
+      |> then(fn o -> if req.as, do: Keyword.put(o, :as, req.as), else: o end)
+      |> then(fn o -> if req.query, do: Keyword.put(o, :query, req.query), else: o end)
+
+    case req.method do
+      "GET" -> get(req.url, opts)
+      "POST" -> post(req.url, req.body, opts)
+      "PATCH" -> patch(req.url, req.body, opts)
+      "DELETE" -> delete(req.url, opts)
+    end
+  end
+
+  @doc """
   Performs a GET request to the given path.
 
   ## Options

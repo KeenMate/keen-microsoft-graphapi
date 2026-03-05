@@ -20,9 +20,7 @@ defmodule MicrosoftGraph.Calendar do
   Lists events on a user's default calendar.
   """
   @spec list_events(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def list_events(user_id, opts \\ []) do
-    Resource.get("/users/#{user_id}/events", opts)
-  end
+  def list_events(user_id, opts \\ []), do: Resource.execute(list_events_query(user_id, opts), opts)
 
   @doc "Batch query variant of `list_events/2`."
   @spec list_events_query(String.t(), keyword()) :: Batch.Request.t()
@@ -32,9 +30,7 @@ defmodule MicrosoftGraph.Calendar do
   Gets a specific event.
   """
   @spec get_event(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def get_event(user_id, event_id, opts \\ []) do
-    Resource.get("/users/#{user_id}/events/#{event_id}", opts)
-  end
+  def get_event(user_id, event_id, opts \\ []), do: Resource.execute(get_event_query(user_id, event_id, opts), opts)
 
   @doc "Batch query variant of `get_event/3`."
   @spec get_event_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
@@ -46,9 +42,7 @@ defmodule MicrosoftGraph.Calendar do
   Creates an event on a user's default calendar.
   """
   @spec create_event(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
-  def create_event(user_id, attrs, opts \\ []) do
-    Resource.post("/users/#{user_id}/events", attrs, opts)
-  end
+  def create_event(user_id, attrs, opts \\ []), do: Resource.execute(create_event_query(user_id, attrs, opts), opts)
 
   @doc "Batch query variant of `create_event/3`."
   @spec create_event_query(String.t(), map(), keyword()) :: Batch.Request.t()
@@ -61,9 +55,7 @@ defmodule MicrosoftGraph.Calendar do
   """
   @spec update_event(String.t(), String.t(), map(), keyword()) ::
           {:ok, map()} | :ok | {:error, term()}
-  def update_event(user_id, event_id, attrs, opts \\ []) do
-    Resource.patch("/users/#{user_id}/events/#{event_id}", attrs, opts)
-  end
+  def update_event(user_id, event_id, attrs, opts \\ []), do: Resource.execute(update_event_query(user_id, event_id, attrs, opts), opts)
 
   @doc "Batch query variant of `update_event/4`."
   @spec update_event_query(String.t(), String.t(), map(), keyword()) :: Batch.Request.t()
@@ -75,9 +67,7 @@ defmodule MicrosoftGraph.Calendar do
   Deletes an event.
   """
   @spec delete_event(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
-  def delete_event(user_id, event_id, opts \\ []) do
-    Resource.delete("/users/#{user_id}/events/#{event_id}", opts)
-  end
+  def delete_event(user_id, event_id, opts \\ []), do: Resource.execute(delete_event_query(user_id, event_id, opts), opts)
 
   @doc "Batch query variant of `delete_event/3`."
   @spec delete_event_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
@@ -101,18 +91,7 @@ defmodule MicrosoftGraph.Calendar do
       )
   """
   @spec calendar_view(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def calendar_view(user_id, opts \\ []) do
-    {start_dt, opts} = Keyword.pop!(opts, :start_date_time)
-    {end_dt, opts} = Keyword.pop!(opts, :end_date_time)
-
-    params = %{
-      "startDateTime" => start_dt,
-      "endDateTime" => end_dt
-    }
-
-    opts = Keyword.update(opts, :params, params, &Map.merge(&1, params))
-    Resource.get("/users/#{user_id}/calendarView", opts)
-  end
+  def calendar_view(user_id, opts \\ []), do: Resource.execute(calendar_view_query(user_id, opts), opts)
 
   @doc "Batch query variant of `calendar_view/2`. Embeds start/end datetimes in the URL."
   @spec calendar_view_query(String.t(), keyword()) :: Batch.Request.t()
@@ -139,9 +118,7 @@ defmodule MicrosoftGraph.Calendar do
   Lists a user's calendars.
   """
   @spec list_calendars(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def list_calendars(user_id, opts \\ []) do
-    Resource.get("/users/#{user_id}/calendars", opts)
-  end
+  def list_calendars(user_id, opts \\ []), do: Resource.execute(list_calendars_query(user_id, opts), opts)
 
   @doc "Batch query variant of `list_calendars/2`."
   @spec list_calendars_query(String.t(), keyword()) :: Batch.Request.t()

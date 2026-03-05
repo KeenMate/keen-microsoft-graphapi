@@ -37,9 +37,7 @@ defmodule MicrosoftGraph.Subscriptions do
   Lists active subscriptions.
   """
   @spec list(keyword()) :: {:ok, map()} | {:error, term()}
-  def list(opts \\ []) do
-    Resource.get("/subscriptions", opts)
-  end
+  def list(opts \\ []), do: Resource.execute(list_query(opts), opts)
 
   @doc "Batch query variant of `list/1`."
   @spec list_query(keyword()) :: Batch.Request.t()
@@ -49,9 +47,7 @@ defmodule MicrosoftGraph.Subscriptions do
   Gets a subscription by ID.
   """
   @spec get(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def get(subscription_id, opts \\ []) do
-    Resource.get("/subscriptions/#{subscription_id}", opts)
-  end
+  def get(subscription_id, opts \\ []), do: Resource.execute(get_query(subscription_id, opts), opts)
 
   @doc "Batch query variant of `get/2`."
   @spec get_query(String.t(), keyword()) :: Batch.Request.t()
@@ -75,9 +71,7 @@ defmodule MicrosoftGraph.Subscriptions do
   * `"latestSupportedTlsVersion"` — Minimum TLS version
   """
   @spec create(map(), keyword()) :: {:ok, map()} | {:error, term()}
-  def create(attrs, opts \\ []) do
-    Resource.post("/subscriptions", attrs, opts)
-  end
+  def create(attrs, opts \\ []), do: Resource.execute(create_query(attrs, opts), opts)
 
   @doc "Batch query variant of `create/2`."
   @spec create_query(map(), keyword()) :: Batch.Request.t()
@@ -93,9 +87,7 @@ defmodule MicrosoftGraph.Subscriptions do
       })
   """
   @spec renew(String.t(), map(), keyword()) :: {:ok, map()} | :ok | {:error, term()}
-  def renew(subscription_id, attrs, opts \\ []) do
-    Resource.patch("/subscriptions/#{subscription_id}", attrs, opts)
-  end
+  def renew(subscription_id, attrs, opts \\ []), do: Resource.execute(renew_query(subscription_id, attrs, opts), opts)
 
   @doc "Batch query variant of `renew/3`."
   @spec renew_query(String.t(), map(), keyword()) :: Batch.Request.t()
@@ -107,9 +99,7 @@ defmodule MicrosoftGraph.Subscriptions do
   Deletes a subscription.
   """
   @spec delete(String.t(), keyword()) :: :ok | {:error, term()}
-  def delete(subscription_id, opts \\ []) do
-    Resource.delete("/subscriptions/#{subscription_id}", opts)
-  end
+  def delete(subscription_id, opts \\ []), do: Resource.execute(delete_query(subscription_id, opts), opts)
 
   @doc "Batch query variant of `delete/2`."
   @spec delete_query(String.t(), keyword()) :: Batch.Request.t()

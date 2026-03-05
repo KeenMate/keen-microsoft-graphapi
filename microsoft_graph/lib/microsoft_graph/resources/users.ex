@@ -34,99 +34,71 @@ defmodule MicrosoftGraph.Users do
   * `:as` - Schema or view module to cast each result
   """
   @spec list(keyword()) :: {:ok, map()} | {:error, term()}
-  def list(opts \\ []) do
-    Resource.get("/users", opts)
-  end
+  def list(opts \\ []), do: Resource.execute(list_query(opts), opts)
 
   @doc "Batch query variant of `list/1`. Returns a `%Batch.Request{}`."
   @spec list_query(keyword()) :: Batch.Request.t()
-  def list_query(opts \\ []) do
-    build_query("GET", "/users", nil, opts)
-  end
+  def list_query(opts \\ []), do: build_query("GET", "/users", nil, opts)
 
   @doc """
   Gets a user by ID or userPrincipalName.
   """
   @spec get(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def get(user_id, opts \\ []) do
-    Resource.get("/users/#{encode(user_id)}", opts)
-  end
+  def get(user_id, opts \\ []), do: Resource.execute(get_query(user_id, opts), opts)
 
   @doc "Batch query variant of `get/2`. Returns a `%Batch.Request{}`."
   @spec get_query(String.t(), keyword()) :: Batch.Request.t()
-  def get_query(user_id, opts \\ []) do
-    build_query("GET", "/users/#{encode(user_id)}", nil, opts)
-  end
+  def get_query(user_id, opts \\ []), do: build_query("GET", "/users/#{encode(user_id)}", nil, opts)
 
   @doc """
   Creates a new user.
   """
   @spec create(map(), keyword()) :: {:ok, map()} | {:error, term()}
-  def create(attrs, opts \\ []) do
-    Resource.post("/users", attrs, opts)
-  end
+  def create(attrs, opts \\ []), do: Resource.execute(create_query(attrs, opts), opts)
 
   @doc "Batch query variant of `create/2`. Returns a `%Batch.Request{}`."
   @spec create_query(map(), keyword()) :: Batch.Request.t()
-  def create_query(attrs, opts \\ []) do
-    build_query("POST", "/users", attrs, opts)
-  end
+  def create_query(attrs, opts \\ []), do: build_query("POST", "/users", attrs, opts)
 
   @doc """
   Updates a user.
   """
   @spec update(String.t(), map(), keyword()) :: {:ok, map()} | :ok | {:error, term()}
-  def update(user_id, attrs, opts \\ []) do
-    Resource.patch("/users/#{encode(user_id)}", attrs, opts)
-  end
+  def update(user_id, attrs, opts \\ []), do: Resource.execute(update_query(user_id, attrs, opts), opts)
 
   @doc "Batch query variant of `update/3`. Returns a `%Batch.Request{}`."
   @spec update_query(String.t(), map(), keyword()) :: Batch.Request.t()
-  def update_query(user_id, attrs, opts \\ []) do
-    build_query("PATCH", "/users/#{encode(user_id)}", attrs, opts)
-  end
+  def update_query(user_id, attrs, opts \\ []), do: build_query("PATCH", "/users/#{encode(user_id)}", attrs, opts)
 
   @doc """
   Deletes a user.
   """
   @spec delete(String.t(), keyword()) :: :ok | {:error, term()}
-  def delete(user_id, opts \\ []) do
-    Resource.delete("/users/#{encode(user_id)}", opts)
-  end
+  def delete(user_id, opts \\ []), do: Resource.execute(delete_query(user_id, opts), opts)
 
   @doc "Batch query variant of `delete/2`. Returns a `%Batch.Request{}`."
   @spec delete_query(String.t(), keyword()) :: Batch.Request.t()
-  def delete_query(user_id, opts \\ []) do
-    build_query("DELETE", "/users/#{encode(user_id)}", nil, opts)
-  end
+  def delete_query(user_id, opts \\ []), do: build_query("DELETE", "/users/#{encode(user_id)}", nil, opts)
 
   @doc """
   Lists a user's direct reports.
   """
   @spec list_direct_reports(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def list_direct_reports(user_id, opts \\ []) do
-    Resource.get("/users/#{encode(user_id)}/directReports", opts)
-  end
+  def list_direct_reports(user_id, opts \\ []), do: Resource.execute(list_direct_reports_query(user_id, opts), opts)
 
   @doc "Batch query variant of `list_direct_reports/2`. Returns a `%Batch.Request{}`."
   @spec list_direct_reports_query(String.t(), keyword()) :: Batch.Request.t()
-  def list_direct_reports_query(user_id, opts \\ []) do
-    build_query("GET", "/users/#{encode(user_id)}/directReports", nil, opts)
-  end
+  def list_direct_reports_query(user_id, opts \\ []), do: build_query("GET", "/users/#{encode(user_id)}/directReports", nil, opts)
 
   @doc """
   Lists groups and directory roles the user is a member of.
   """
   @spec list_member_of(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def list_member_of(user_id, opts \\ []) do
-    Resource.get("/users/#{encode(user_id)}/memberOf", opts)
-  end
+  def list_member_of(user_id, opts \\ []), do: Resource.execute(list_member_of_query(user_id, opts), opts)
 
   @doc "Batch query variant of `list_member_of/2`. Returns a `%Batch.Request{}`."
   @spec list_member_of_query(String.t(), keyword()) :: Batch.Request.t()
-  def list_member_of_query(user_id, opts \\ []) do
-    build_query("GET", "/users/#{encode(user_id)}/memberOf", nil, opts)
-  end
+  def list_member_of_query(user_id, opts \\ []), do: build_query("GET", "/users/#{encode(user_id)}/memberOf", nil, opts)
 
   @doc """
   Delta query for users. Returns changes since the last sync.
@@ -145,7 +117,6 @@ defmodule MicrosoftGraph.Users do
   defp build_query(method, url, body, opts) do
     {as, opts} = Keyword.pop(opts, :as)
     {query, _opts} = Keyword.pop(opts, :query)
-
     %Batch.Request{method: method, url: url, body: body, query: query, as: as}
   end
 end

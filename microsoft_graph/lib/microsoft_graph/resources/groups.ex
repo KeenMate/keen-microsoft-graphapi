@@ -17,9 +17,7 @@ defmodule MicrosoftGraph.Groups do
   Lists groups in the organization.
   """
   @spec list(keyword()) :: {:ok, map()} | {:error, term()}
-  def list(opts \\ []) do
-    Resource.get("/groups", opts)
-  end
+  def list(opts \\ []), do: Resource.execute(list_query(opts), opts)
 
   @doc "Batch query variant of `list/1`."
   @spec list_query(keyword()) :: Batch.Request.t()
@@ -29,9 +27,7 @@ defmodule MicrosoftGraph.Groups do
   Gets a group by ID.
   """
   @spec get(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def get(group_id, opts \\ []) do
-    Resource.get("/groups/#{group_id}", opts)
-  end
+  def get(group_id, opts \\ []), do: Resource.execute(get_query(group_id, opts), opts)
 
   @doc "Batch query variant of `get/2`."
   @spec get_query(String.t(), keyword()) :: Batch.Request.t()
@@ -41,9 +37,7 @@ defmodule MicrosoftGraph.Groups do
   Creates a new group.
   """
   @spec create(map(), keyword()) :: {:ok, map()} | {:error, term()}
-  def create(attrs, opts \\ []) do
-    Resource.post("/groups", attrs, opts)
-  end
+  def create(attrs, opts \\ []), do: Resource.execute(create_query(attrs, opts), opts)
 
   @doc "Batch query variant of `create/2`."
   @spec create_query(map(), keyword()) :: Batch.Request.t()
@@ -53,9 +47,7 @@ defmodule MicrosoftGraph.Groups do
   Updates a group.
   """
   @spec update(String.t(), map(), keyword()) :: {:ok, map()} | :ok | {:error, term()}
-  def update(group_id, attrs, opts \\ []) do
-    Resource.patch("/groups/#{group_id}", attrs, opts)
-  end
+  def update(group_id, attrs, opts \\ []), do: Resource.execute(update_query(group_id, attrs, opts), opts)
 
   @doc "Batch query variant of `update/3`."
   @spec update_query(String.t(), map(), keyword()) :: Batch.Request.t()
@@ -65,9 +57,7 @@ defmodule MicrosoftGraph.Groups do
   Deletes a group.
   """
   @spec delete(String.t(), keyword()) :: :ok | {:error, term()}
-  def delete(group_id, opts \\ []) do
-    Resource.delete("/groups/#{group_id}", opts)
-  end
+  def delete(group_id, opts \\ []), do: Resource.execute(delete_query(group_id, opts), opts)
 
   @doc "Batch query variant of `delete/2`."
   @spec delete_query(String.t(), keyword()) :: Batch.Request.t()
@@ -77,9 +67,7 @@ defmodule MicrosoftGraph.Groups do
   Lists members of a group.
   """
   @spec list_members(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def list_members(group_id, opts \\ []) do
-    Resource.get("/groups/#{group_id}/members", opts)
-  end
+  def list_members(group_id, opts \\ []), do: Resource.execute(list_members_query(group_id, opts), opts)
 
   @doc "Batch query variant of `list_members/2`."
   @spec list_members_query(String.t(), keyword()) :: Batch.Request.t()
@@ -91,13 +79,7 @@ defmodule MicrosoftGraph.Groups do
   The `member_id` should be the directory object ID of the user or service principal.
   """
   @spec add_member(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
-  def add_member(group_id, member_id, opts \\ []) do
-    body = %{
-      "@odata.id" => "https://graph.microsoft.com/v1.0/directoryObjects/#{member_id}"
-    }
-
-    Resource.post("/groups/#{group_id}/members/$ref", body, opts)
-  end
+  def add_member(group_id, member_id, opts \\ []), do: Resource.execute(add_member_query(group_id, member_id, opts), opts)
 
   @doc "Batch query variant of `add_member/3`."
   @spec add_member_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
@@ -110,9 +92,7 @@ defmodule MicrosoftGraph.Groups do
   Removes a member from a group.
   """
   @spec remove_member(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
-  def remove_member(group_id, member_id, opts \\ []) do
-    Resource.delete("/groups/#{group_id}/members/#{member_id}/$ref", opts)
-  end
+  def remove_member(group_id, member_id, opts \\ []), do: Resource.execute(remove_member_query(group_id, member_id, opts), opts)
 
   @doc "Batch query variant of `remove_member/3`."
   @spec remove_member_query(String.t(), String.t(), keyword()) :: Batch.Request.t()

@@ -18,9 +18,7 @@ defmodule MicrosoftGraph.Files do
   Gets a user's default drive.
   """
   @spec get_drive(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def get_drive(user_id, opts \\ []) do
-    Resource.get("/users/#{user_id}/drive", opts)
-  end
+  def get_drive(user_id, opts \\ []), do: Resource.execute(get_drive_query(user_id, opts), opts)
 
   @doc "Batch query variant of `get_drive/2`."
   @spec get_drive_query(String.t(), keyword()) :: Batch.Request.t()
@@ -30,9 +28,7 @@ defmodule MicrosoftGraph.Files do
   Lists children of the root folder in a drive.
   """
   @spec list_root_children(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def list_root_children(drive_id, opts \\ []) do
-    Resource.get("/drives/#{drive_id}/root/children", opts)
-  end
+  def list_root_children(drive_id, opts \\ []), do: Resource.execute(list_root_children_query(drive_id, opts), opts)
 
   @doc "Batch query variant of `list_root_children/2`."
   @spec list_root_children_query(String.t(), keyword()) :: Batch.Request.t()
@@ -42,9 +38,7 @@ defmodule MicrosoftGraph.Files do
   Lists children of a specific item in a drive.
   """
   @spec list_children(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def list_children(drive_id, item_id, opts \\ []) do
-    Resource.get("/drives/#{drive_id}/items/#{item_id}/children", opts)
-  end
+  def list_children(drive_id, item_id, opts \\ []), do: Resource.execute(list_children_query(drive_id, item_id, opts), opts)
 
   @doc "Batch query variant of `list_children/3`."
   @spec list_children_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
@@ -56,9 +50,7 @@ defmodule MicrosoftGraph.Files do
   Gets a drive item by ID.
   """
   @spec get_item(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def get_item(drive_id, item_id, opts \\ []) do
-    Resource.get("/drives/#{drive_id}/items/#{item_id}", opts)
-  end
+  def get_item(drive_id, item_id, opts \\ []), do: Resource.execute(get_item_query(drive_id, item_id, opts), opts)
 
   @doc "Batch query variant of `get_item/3`."
   @spec get_item_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
@@ -72,10 +64,7 @@ defmodule MicrosoftGraph.Files do
   The path should be relative to the root (e.g., "Documents/report.docx").
   """
   @spec get_item_by_path(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def get_item_by_path(drive_id, path, opts \\ []) do
-    encoded_path = URI.encode(path)
-    Resource.get("/drives/#{drive_id}/root:/#{encoded_path}:", opts)
-  end
+  def get_item_by_path(drive_id, path, opts \\ []), do: Resource.execute(get_item_by_path_query(drive_id, path, opts), opts)
 
   @doc "Batch query variant of `get_item_by_path/3`."
   @spec get_item_by_path_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
@@ -157,9 +146,7 @@ defmodule MicrosoftGraph.Files do
   @spec create_upload_session(String.t(), String.t(), map(), keyword()) ::
           {:ok, map()} | {:error, term()}
   def create_upload_session(drive_id, path, attrs \\ %{}, opts \\ []) do
-    encoded_path = URI.encode(path)
-    body = %{"item" => attrs}
-    Resource.post("/drives/#{drive_id}/root:/#{encoded_path}:/createUploadSession", body, opts)
+    Resource.execute(create_upload_session_query(drive_id, path, attrs, opts), opts)
   end
 
   @doc "Batch query variant of `create_upload_session/4`."
