@@ -32,6 +32,38 @@ defmodule MicrosoftGraph.UsersTest do
         {"GET", "/users/user-id-1/memberOf"} ->
           Req.Test.json(conn, %{"value" => [%{"id" => "group-1"}]})
 
+        {"GET", "/users/user-id-1/manager"} ->
+          Req.Test.json(conn, %{"id" => "manager-id-1", "displayName" => "Manager User"})
+
+        {"PUT", "/users/user-id-1/manager/$ref"} ->
+          Plug.Conn.send_resp(conn, 204, "")
+
+        {"DELETE", "/users/user-id-1/manager/$ref"} ->
+          Plug.Conn.send_resp(conn, 204, "")
+
+        {"GET", "/users/user-id-1/photo"} ->
+          Req.Test.json(conn, %{"@odata.mediaContentType" => "image/jpeg", "height" => 96, "width" => 96})
+
+        {"GET", "/users/user-id-1/photo/$value"} ->
+          conn
+          |> Plug.Conn.put_resp_content_type("image/jpeg")
+          |> Plug.Conn.send_resp(200, <<0xFF, 0xD8, 0xFF>>)
+
+        {"PUT", "/users/user-id-1/photo/$value"} ->
+          Plug.Conn.send_resp(conn, 200, "")
+
+        {"GET", "/users/user-id-1/transitiveMemberOf"} ->
+          Req.Test.json(conn, %{"value" => [%{"id" => "group-1"}, %{"id" => "group-2"}]})
+
+        {"POST", "/users/user-id-1/assignLicense"} ->
+          Req.Test.json(conn, %{"id" => "user-id-1"})
+
+        {"POST", "/users/user-id-1/revokeSignInSessions"} ->
+          Req.Test.json(conn, %{"value" => true})
+
+        {"POST", "/users/user-id-1/changePassword"} ->
+          Plug.Conn.send_resp(conn, 204, "")
+
         _ ->
           Plug.Conn.send_resp(conn, 404, "")
       end
@@ -136,6 +168,75 @@ defmodule MicrosoftGraph.UsersTest do
     test "returns memberships", %{client: client} do
       assert {:ok, %{"value" => groups}} = Users.list_member_of("user-id-1", client: client)
       assert length(groups) == 1
+    end
+  end
+
+  describe "get_manager/2" do
+    test "returns the user's manager", %{client: client} do
+      assert {:ok, manager} = Users.get_manager("user-id-1", client: client)
+      assert manager["id"] == "manager-id-1"
+      assert manager["displayName"] == "Manager User"
+    end
+  end
+
+  describe "assign_manager/3" do
+    test "assigns a manager to a user", %{client: client} do
+      assert :ok = Users.assign_manager("user-id-1", "manager-id-1", client: client)
+    end
+  end
+
+  describe "remove_manager/2" do
+    test "removes a user's manager", %{client: client} do
+      assert :ok = Users.remove_manager("user-id-1", client: client)
+    end
+  end
+
+  describe "get_photo/2" do
+    test "returns photo metadata", %{client: client} do
+      assert {:ok, photo} = Users.get_photo("user-id-1", client: client)
+      assert photo["@odata.mediaContentType"] == "image/jpeg"
+      assert photo["height"] == 96
+    end
+  end
+
+  describe "get_photo_content/2" do
+    test "returns photo binary content", %{client: client} do
+      assert {:ok, content} = Users.get_photo_content("user-id-1", client: client)
+      assert is_binary(content)
+    end
+  end
+
+  describe "update_photo_content/3" do
+    test "uploads photo binary content", %{client: client} do
+      assert {:ok, _} = Users.update_photo_content("user-id-1", <<0xFF, 0xD8, 0xFF>>, client: client)
+    end
+  end
+
+  describe "list_transitive_member_of/2" do
+    test "returns transitive memberships", %{client: client} do
+      assert {:ok, %{"value" => groups}} = Users.list_transitive_member_of("user-id-1", client: client)
+      assert length(groups) == 2
+    end
+  end
+
+  describe "assign_license/3" do
+    test "assigns licenses to a user", %{client: client} do
+      attrs = %{"addLicenses" => [%{"skuId" => "sku-1"}], "removeLicenses" => []}
+      assert {:ok, user} = Users.assign_license("user-id-1", attrs, client: client)
+      assert user["id"] == "user-id-1"
+    end
+  end
+
+  describe "revoke_sign_in_sessions/2" do
+    test "revokes all sign-in sessions", %{client: client} do
+      assert {:ok, %{"value" => true}} = Users.revoke_sign_in_sessions("user-id-1", client: client)
+    end
+  end
+
+  describe "change_password/3" do
+    test "changes a user's password", %{client: client} do
+      attrs = %{"currentPassword" => "old", "newPassword" => "new"}
+      assert :ok = Users.change_password("user-id-1", attrs, client: client)
     end
   end
 end

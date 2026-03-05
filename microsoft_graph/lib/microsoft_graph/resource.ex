@@ -43,6 +43,7 @@ defmodule MicrosoftGraph.Resource do
     case req.method do
       "GET" -> get(req.url, opts)
       "POST" -> post(req.url, req.body, opts)
+      "PUT" -> put(req.url, req.body, opts)
       "PATCH" -> patch(req.url, req.body, opts)
       "DELETE" -> delete(req.url, opts)
     end
@@ -93,6 +94,26 @@ defmodule MicrosoftGraph.Resource do
 
     client
     |> Req.post(req_opts)
+    |> Response.normalize()
+    |> maybe_cast(as_module)
+  end
+
+  @doc """
+  Performs a PUT request to the given path with the given body.
+  """
+  @spec put(String.t(), map() | nil, keyword()) :: {:ok, map()} | :ok | {:error, term()}
+  def put(path, body, opts \\ []) do
+    {as_module, opts} = Keyword.pop(opts, :as)
+    client = resolve_client(opts)
+
+    req_opts =
+      [url: resolve_url(path, opts), params: build_params(opts)]
+      |> maybe_put_token(opts)
+      |> maybe_put_request_id(opts)
+      |> maybe_put_json(body)
+
+    client
+    |> Req.put(req_opts)
     |> Response.normalize()
     |> maybe_cast(as_module)
   end

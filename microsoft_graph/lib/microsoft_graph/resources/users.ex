@@ -23,6 +23,7 @@ defmodule MicrosoftGraph.Users do
   alias MicrosoftGraph.Batch
   alias MicrosoftGraph.Delta
   alias MicrosoftGraph.Resource
+  alias MicrosoftGraph.Response
 
   @doc """
   Lists users in the organization.
@@ -99,6 +100,117 @@ defmodule MicrosoftGraph.Users do
   @doc "Batch query variant of `list_member_of/2`. Returns a `%Batch.Request{}`."
   @spec list_member_of_query(String.t(), keyword()) :: Batch.Request.t()
   def list_member_of_query(user_id, opts \\ []), do: build_query("GET", "/users/#{encode(user_id)}/memberOf", nil, opts)
+
+  @doc """
+  Gets a user's manager.
+  """
+  @spec get_manager(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def get_manager(user_id, opts \\ []), do: Resource.execute(get_manager_query(user_id, opts), opts)
+
+  @doc "Batch query variant of `get_manager/2`."
+  @spec get_manager_query(String.t(), keyword()) :: Batch.Request.t()
+  def get_manager_query(user_id, opts \\ []), do: build_query("GET", "/users/#{encode(user_id)}/manager", nil, opts)
+
+  @doc """
+  Assigns a manager to a user.
+  """
+  @spec assign_manager(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  def assign_manager(user_id, manager_id, opts \\ []), do: Resource.execute(assign_manager_query(user_id, manager_id, opts), opts)
+
+  @doc "Batch query variant of `assign_manager/3`."
+  @spec assign_manager_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
+  def assign_manager_query(user_id, manager_id, opts \\ []) do
+    body = %{"@odata.id" => "https://graph.microsoft.com/v1.0/users/#{manager_id}"}
+    build_query("PUT", "/users/#{encode(user_id)}/manager/$ref", body, opts)
+  end
+
+  @doc """
+  Removes a user's manager assignment.
+  """
+  @spec remove_manager(String.t(), keyword()) :: :ok | {:error, term()}
+  def remove_manager(user_id, opts \\ []), do: Resource.execute(remove_manager_query(user_id, opts), opts)
+
+  @doc "Batch query variant of `remove_manager/2`."
+  @spec remove_manager_query(String.t(), keyword()) :: Batch.Request.t()
+  def remove_manager_query(user_id, opts \\ []), do: build_query("DELETE", "/users/#{encode(user_id)}/manager/$ref", nil, opts)
+
+  @doc """
+  Gets a user's photo metadata.
+  """
+  @spec get_photo(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def get_photo(user_id, opts \\ []), do: Resource.execute(get_photo_query(user_id, opts), opts)
+
+  @doc "Batch query variant of `get_photo/2`."
+  @spec get_photo_query(String.t(), keyword()) :: Batch.Request.t()
+  def get_photo_query(user_id, opts \\ []), do: build_query("GET", "/users/#{encode(user_id)}/photo", nil, opts)
+
+  @doc """
+  Gets a user's photo binary content.
+  """
+  @spec get_photo_content(String.t(), keyword()) :: {:ok, binary()} | {:error, term()}
+  def get_photo_content(user_id, opts \\ []) do
+    client = Resource.resolve_client(opts)
+
+    client
+    |> Req.get(url: "/users/#{encode(user_id)}/photo/$value")
+    |> Response.normalize()
+  end
+
+  @doc """
+  Updates a user's photo with binary content.
+  """
+  @spec update_photo_content(String.t(), binary(), keyword()) :: :ok | {:error, term()}
+  def update_photo_content(user_id, content, opts \\ []) do
+    client = Resource.resolve_client(opts)
+
+    client
+    |> Req.put(
+      url: "/users/#{encode(user_id)}/photo/$value",
+      body: content,
+      headers: [{"content-type", "image/jpeg"}]
+    )
+    |> Response.normalize()
+  end
+
+  @doc """
+  Lists groups and directory roles the user is a transitive member of.
+  """
+  @spec list_transitive_member_of(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def list_transitive_member_of(user_id, opts \\ []), do: Resource.execute(list_transitive_member_of_query(user_id, opts), opts)
+
+  @doc "Batch query variant of `list_transitive_member_of/2`."
+  @spec list_transitive_member_of_query(String.t(), keyword()) :: Batch.Request.t()
+  def list_transitive_member_of_query(user_id, opts \\ []), do: build_query("GET", "/users/#{encode(user_id)}/transitiveMemberOf", nil, opts)
+
+  @doc """
+  Assigns licenses to a user.
+  """
+  @spec assign_license(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def assign_license(user_id, attrs, opts \\ []), do: Resource.execute(assign_license_query(user_id, attrs, opts), opts)
+
+  @doc "Batch query variant of `assign_license/3`."
+  @spec assign_license_query(String.t(), map(), keyword()) :: Batch.Request.t()
+  def assign_license_query(user_id, attrs, opts \\ []), do: build_query("POST", "/users/#{encode(user_id)}/assignLicense", attrs, opts)
+
+  @doc """
+  Revokes all sign-in sessions for a user.
+  """
+  @spec revoke_sign_in_sessions(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def revoke_sign_in_sessions(user_id, opts \\ []), do: Resource.execute(revoke_sign_in_sessions_query(user_id, opts), opts)
+
+  @doc "Batch query variant of `revoke_sign_in_sessions/2`."
+  @spec revoke_sign_in_sessions_query(String.t(), keyword()) :: Batch.Request.t()
+  def revoke_sign_in_sessions_query(user_id, opts \\ []), do: build_query("POST", "/users/#{encode(user_id)}/revokeSignInSessions", nil, opts)
+
+  @doc """
+  Changes a user's password.
+  """
+  @spec change_password(String.t(), map(), keyword()) :: :ok | {:error, term()}
+  def change_password(user_id, attrs, opts \\ []), do: Resource.execute(change_password_query(user_id, attrs, opts), opts)
+
+  @doc "Batch query variant of `change_password/3`."
+  @spec change_password_query(String.t(), map(), keyword()) :: Batch.Request.t()
+  def change_password_query(user_id, attrs, opts \\ []), do: build_query("POST", "/users/#{encode(user_id)}/changePassword", attrs, opts)
 
   @doc """
   Delta query for users. Returns changes since the last sync.

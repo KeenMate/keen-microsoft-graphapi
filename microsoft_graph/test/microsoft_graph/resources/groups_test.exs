@@ -35,6 +35,27 @@ defmodule MicrosoftGraph.GroupsTest do
         {"DELETE", "/groups/group-id-1/members/user-id-1/$ref"} ->
           Plug.Conn.send_resp(conn, 204, "")
 
+        {"GET", "/groups/group-id-1/owners"} ->
+          Req.Test.json(conn, %{"value" => [%{"id" => "owner-1"}]})
+
+        {"POST", "/groups/group-id-1/owners/$ref"} ->
+          Plug.Conn.send_resp(conn, 204, "")
+
+        {"DELETE", "/groups/group-id-1/owners/owner-1/$ref"} ->
+          Plug.Conn.send_resp(conn, 204, "")
+
+        {"GET", "/groups/group-id-1/transitiveMembers"} ->
+          Req.Test.json(conn, %{"value" => [%{"id" => "user-1"}, %{"id" => "user-2"}]})
+
+        {"GET", "/groups/group-id-1/memberOf"} ->
+          Req.Test.json(conn, %{"value" => [%{"id" => "parent-group-1"}]})
+
+        {"POST", "/groups/group-id-1/assignLicense"} ->
+          Req.Test.json(conn, %{"id" => "group-id-1"})
+
+        {"POST", "/groups/group-id-1/renew"} ->
+          Plug.Conn.send_resp(conn, 204, "")
+
         _ ->
           Plug.Conn.send_resp(conn, 404, "")
       end
@@ -97,6 +118,55 @@ defmodule MicrosoftGraph.GroupsTest do
   describe "remove_member/3" do
     test "removes a member from the group", %{client: client} do
       assert :ok = Groups.remove_member("group-id-1", "user-id-1", client: client)
+    end
+  end
+
+  describe "list_owners/2" do
+    test "returns group owners", %{client: client} do
+      assert {:ok, %{"value" => owners}} = Groups.list_owners("group-id-1", client: client)
+      assert length(owners) == 1
+      assert hd(owners)["id"] == "owner-1"
+    end
+  end
+
+  describe "add_owner/3" do
+    test "adds an owner to the group", %{client: client} do
+      assert :ok = Groups.add_owner("group-id-1", "owner-1", client: client)
+    end
+  end
+
+  describe "remove_owner/3" do
+    test "removes an owner from the group", %{client: client} do
+      assert :ok = Groups.remove_owner("group-id-1", "owner-1", client: client)
+    end
+  end
+
+  describe "list_transitive_members/2" do
+    test "returns transitive members", %{client: client} do
+      assert {:ok, %{"value" => members}} = Groups.list_transitive_members("group-id-1", client: client)
+      assert length(members) == 2
+    end
+  end
+
+  describe "list_member_of/2" do
+    test "returns groups this group is a member of", %{client: client} do
+      assert {:ok, %{"value" => groups}} = Groups.list_member_of("group-id-1", client: client)
+      assert length(groups) == 1
+      assert hd(groups)["id"] == "parent-group-1"
+    end
+  end
+
+  describe "assign_license/3" do
+    test "assigns licenses to a group", %{client: client} do
+      attrs = %{"addLicenses" => [%{"skuId" => "sku-1"}], "removeLicenses" => []}
+      assert {:ok, group} = Groups.assign_license("group-id-1", attrs, client: client)
+      assert group["id"] == "group-id-1"
+    end
+  end
+
+  describe "renew/2" do
+    test "renews a group", %{client: client} do
+      assert :ok = Groups.renew("group-id-1", client: client)
     end
   end
 end

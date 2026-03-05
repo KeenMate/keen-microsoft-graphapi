@@ -101,6 +101,83 @@ defmodule MicrosoftGraph.Groups do
   end
 
   @doc """
+  Lists owners of a group.
+  """
+  @spec list_owners(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def list_owners(group_id, opts \\ []), do: Resource.execute(list_owners_query(group_id, opts), opts)
+
+  @doc "Batch query variant of `list_owners/2`."
+  @spec list_owners_query(String.t(), keyword()) :: Batch.Request.t()
+  def list_owners_query(group_id, opts \\ []), do: build_query("GET", "/groups/#{group_id}/owners", nil, opts)
+
+  @doc """
+  Adds an owner to a group.
+
+  The `owner_id` should be the directory object ID of the user.
+  """
+  @spec add_owner(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  def add_owner(group_id, owner_id, opts \\ []), do: Resource.execute(add_owner_query(group_id, owner_id, opts), opts)
+
+  @doc "Batch query variant of `add_owner/3`."
+  @spec add_owner_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
+  def add_owner_query(group_id, owner_id, opts \\ []) do
+    body = %{"@odata.id" => "https://graph.microsoft.com/v1.0/directoryObjects/#{owner_id}"}
+    build_query("POST", "/groups/#{group_id}/owners/$ref", body, opts)
+  end
+
+  @doc """
+  Removes an owner from a group.
+  """
+  @spec remove_owner(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  def remove_owner(group_id, owner_id, opts \\ []), do: Resource.execute(remove_owner_query(group_id, owner_id, opts), opts)
+
+  @doc "Batch query variant of `remove_owner/3`."
+  @spec remove_owner_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
+  def remove_owner_query(group_id, owner_id, opts \\ []) do
+    build_query("DELETE", "/groups/#{group_id}/owners/#{owner_id}/$ref", nil, opts)
+  end
+
+  @doc """
+  Lists transitive members of a group.
+  """
+  @spec list_transitive_members(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def list_transitive_members(group_id, opts \\ []), do: Resource.execute(list_transitive_members_query(group_id, opts), opts)
+
+  @doc "Batch query variant of `list_transitive_members/2`."
+  @spec list_transitive_members_query(String.t(), keyword()) :: Batch.Request.t()
+  def list_transitive_members_query(group_id, opts \\ []), do: build_query("GET", "/groups/#{group_id}/transitiveMembers", nil, opts)
+
+  @doc """
+  Lists groups and directory roles the group is a member of.
+  """
+  @spec list_member_of(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def list_member_of(group_id, opts \\ []), do: Resource.execute(list_member_of_query(group_id, opts), opts)
+
+  @doc "Batch query variant of `list_member_of/2`."
+  @spec list_member_of_query(String.t(), keyword()) :: Batch.Request.t()
+  def list_member_of_query(group_id, opts \\ []), do: build_query("GET", "/groups/#{group_id}/memberOf", nil, opts)
+
+  @doc """
+  Assigns licenses to a group.
+  """
+  @spec assign_license(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def assign_license(group_id, attrs, opts \\ []), do: Resource.execute(assign_license_query(group_id, attrs, opts), opts)
+
+  @doc "Batch query variant of `assign_license/3`."
+  @spec assign_license_query(String.t(), map(), keyword()) :: Batch.Request.t()
+  def assign_license_query(group_id, attrs, opts \\ []), do: build_query("POST", "/groups/#{group_id}/assignLicense", attrs, opts)
+
+  @doc """
+  Renews a group's expiration.
+  """
+  @spec renew(String.t(), keyword()) :: :ok | {:error, term()}
+  def renew(group_id, opts \\ []), do: Resource.execute(renew_query(group_id, opts), opts)
+
+  @doc "Batch query variant of `renew/2`."
+  @spec renew_query(String.t(), keyword()) :: Batch.Request.t()
+  def renew_query(group_id, opts \\ []), do: build_query("POST", "/groups/#{group_id}/renew", nil, opts)
+
+  @doc """
   Delta query for groups. Returns changes since the last sync.
 
   See `MicrosoftGraph.Delta` for details.
