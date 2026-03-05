@@ -1,0 +1,8 @@
+{
+  "id": "user-id-1",
+  "displayName": "Alice Smith",
+  "mail": "alice@contoso.com",
+  "userPrincipalName": "alice@contoso.com",
+  "jobTitle": "Software Engineer",
+  "department": "Engineering"
+}

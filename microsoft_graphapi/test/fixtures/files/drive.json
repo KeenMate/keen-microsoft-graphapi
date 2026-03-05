@@ -1,0 +1,16 @@
+{
+  "id": "drive-id-1",
+  "driveType": "personal",
+  "name": "OneDrive",
+  "owner": {
+    "user": {
+      "id": "user-id-1",
+      "displayName": "Alice Smith"
+    }
+  },
+  "quota": {
+    "total": 1099511627776,
+    "used": 524288000,
+    "remaining": 1098987339776
+  }
+}

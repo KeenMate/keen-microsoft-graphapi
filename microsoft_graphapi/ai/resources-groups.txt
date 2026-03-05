@@ -1,0 +1,181 @@
+GROUPS RESOURCE
+===============
+
+Module: GraphApi.Groups
+Endpoints: 26 functions (each has a _query variant for batch requests)
+
+All functions accept opts with: :client, :query, :as, :access_token, :client_request_id
+
+
+CRUD OPERATIONS
+---------------
+
+  GraphApi.Groups.list(opts \\ [])
+  GET /groups
+  @spec list(keyword()) :: {:ok, map()} | {:error, term()}
+  Lists groups in the organization.
+
+  GraphApi.Groups.get(group_id, opts \\ [])
+  GET /groups/{group_id}
+  @spec get(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Gets a group by ID.
+
+  GraphApi.Groups.create(attrs, opts \\ [])
+  POST /groups
+  @spec create(map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Creates a new group.
+
+  GraphApi.Groups.update(group_id, attrs, opts \\ [])
+  PATCH /groups/{group_id}
+  @spec update(String.t(), map(), keyword()) :: {:ok, map()} | :ok | {:error, term()}
+  Updates a group.
+
+  GraphApi.Groups.delete(group_id, opts \\ [])
+  DELETE /groups/{group_id}
+  @spec delete(String.t(), keyword()) :: :ok | {:error, term()}
+  Deletes a group.
+
+
+MEMBERS
+-------
+
+  GraphApi.Groups.list_members(group_id, opts \\ [])
+  GET /groups/{group_id}/members
+  @spec list_members(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists members of a group.
+
+  GraphApi.Groups.add_member(group_id, member_id, opts \\ [])
+  POST /groups/{group_id}/members/$ref
+  @spec add_member(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  Adds a member to a group. member_id is the directory object ID.
+  Body: {"@odata.id": ".../directoryObjects/{member_id}"}
+
+  GraphApi.Groups.remove_member(group_id, member_id, opts \\ [])
+  DELETE /groups/{group_id}/members/{member_id}/$ref
+  @spec remove_member(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  Removes a member from a group.
+
+  GraphApi.Groups.list_transitive_members(group_id, opts \\ [])
+  GET /groups/{group_id}/transitiveMembers
+  @spec list_transitive_members(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists transitive members of a group.
+
+
+OWNERS
+------
+
+  GraphApi.Groups.list_owners(group_id, opts \\ [])
+  GET /groups/{group_id}/owners
+  @spec list_owners(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists owners of a group.
+
+  GraphApi.Groups.add_owner(group_id, owner_id, opts \\ [])
+  POST /groups/{group_id}/owners/$ref
+  @spec add_owner(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  Adds an owner to a group. owner_id is the directory object ID.
+  Body: {"@odata.id": ".../directoryObjects/{owner_id}"}
+
+  GraphApi.Groups.remove_owner(group_id, owner_id, opts \\ [])
+  DELETE /groups/{group_id}/owners/{owner_id}/$ref
+  @spec remove_owner(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  Removes an owner from a group.
+
+
+MEMBERSHIP INTROSPECTION
+------------------------
+
+  GraphApi.Groups.list_member_of(group_id, opts \\ [])
+  GET /groups/{group_id}/memberOf
+  @spec list_member_of(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists groups and directory roles the group is a member of.
+
+  GraphApi.Groups.list_transitive_member_of(group_id, opts \\ [])
+  GET /groups/{group_id}/transitiveMemberOf
+  @spec list_transitive_member_of(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists groups and directory roles the group is a transitive member of.
+
+  GraphApi.Groups.get_member_objects(group_id, attrs, opts \\ [])
+  POST /groups/{group_id}/getMemberObjects
+  @spec get_member_objects(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Returns all group and directory role IDs (transitive).
+
+  GraphApi.Groups.get_member_groups(group_id, attrs, opts \\ [])
+  POST /groups/{group_id}/getMemberGroups
+  @spec get_member_groups(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Returns all group IDs (transitive).
+
+  GraphApi.Groups.check_member_objects(group_id, attrs, opts \\ [])
+  POST /groups/{group_id}/checkMemberObjects
+  @spec check_member_objects(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Checks whether the group is a member of the specified objects.
+
+  GraphApi.Groups.check_member_groups(group_id, attrs, opts \\ [])
+  POST /groups/{group_id}/checkMemberGroups
+  @spec check_member_groups(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Checks whether the group is a member of the specified groups.
+
+
+LICENSES
+--------
+
+  GraphApi.Groups.assign_license(group_id, attrs, opts \\ [])
+  POST /groups/{group_id}/assignLicense
+  @spec assign_license(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Assigns licenses to a group.
+
+  GraphApi.Groups.renew(group_id, opts \\ [])
+  POST /groups/{group_id}/renew
+  @spec renew(String.t(), keyword()) :: :ok | {:error, term()}
+  Renews a group's expiration.
+
+
+APP ROLE ASSIGNMENTS
+--------------------
+
+  GraphApi.Groups.list_app_role_assignments(group_id, opts \\ [])
+  GET /groups/{group_id}/appRoleAssignments
+  @spec list_app_role_assignments(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists app role assignments for a group.
+
+  GraphApi.Groups.add_app_role_assignment(group_id, attrs, opts \\ [])
+  POST /groups/{group_id}/appRoleAssignments
+  @spec add_app_role_assignment(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Adds an app role assignment to a group.
+
+  GraphApi.Groups.remove_app_role_assignment(group_id, assignment_id, opts \\ [])
+  DELETE /groups/{group_id}/appRoleAssignments/{assignment_id}
+  @spec remove_app_role_assignment(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  Removes an app role assignment from a group.
+
+
+PERMISSION GRANTS
+-----------------
+
+  GraphApi.Groups.list_permission_grants(group_id, opts \\ [])
+  GET /groups/{group_id}/permissionGrants
+  @spec list_permission_grants(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists resource-specific permission grants on a group.
+
+
+DELTA QUERIES
+-------------
+
+  GraphApi.Groups.delta(opts \\ [])
+  GET /groups/delta
+  @spec delta(keyword()) :: {:ok, Delta.delta_page()} | {:error, term()}
+  Delta query for groups. Returns changes since last sync.
+
+  GraphApi.Groups.members_delta(group_id, opts \\ [])
+  GET /groups/{group_id}/members/delta
+  @spec members_delta(String.t(), keyword()) :: {:ok, Delta.delta_page()} | {:error, term()}
+  Delta query for group membership. Returns member changes since last sync.
+
+
+EXAMPLES
+--------
+
+    {:ok, %{"value" => groups}} = GraphApi.Groups.list()
+    {:ok, group} = GraphApi.Groups.get("group-id")
+    {:ok, %{"value" => members}} = GraphApi.Groups.list_members("group-id")
+    :ok = GraphApi.Groups.add_member("group-id", "user-object-id")
+    :ok = GraphApi.Groups.remove_member("group-id", "user-object-id")

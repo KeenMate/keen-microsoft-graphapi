@@ -1,0 +1,111 @@
+CALENDAR RESOURCE
+=================
+
+Module: GraphApi.Calendar
+Endpoints: 9 functions (each has a _query variant for batch requests)
+
+All functions accept opts with: :client, :query, :as, :access_token, :client_request_id
+
+
+EVENTS CRUD
+-----------
+
+  GraphApi.Calendar.list_events(user_id, opts \\ [])
+  GET /users/{user_id}/events
+  @spec list_events(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists events on a user's default calendar.
+
+  GraphApi.Calendar.get_event(user_id, event_id, opts \\ [])
+  GET /users/{user_id}/events/{event_id}
+  @spec get_event(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Gets a specific event.
+
+  GraphApi.Calendar.create_event(user_id, attrs, opts \\ [])
+  POST /users/{user_id}/events
+  @spec create_event(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Creates an event on a user's default calendar.
+
+  GraphApi.Calendar.update_event(user_id, event_id, attrs, opts \\ [])
+  PATCH /users/{user_id}/events/{event_id}
+  @spec update_event(String.t(), String.t(), map(), keyword()) :: {:ok, map()} | :ok | {:error, term()}
+  Updates an event.
+
+  GraphApi.Calendar.delete_event(user_id, event_id, opts \\ [])
+  DELETE /users/{user_id}/events/{event_id}
+  @spec delete_event(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  Deletes an event.
+
+
+CALENDAR VIEW
+-------------
+
+  GraphApi.Calendar.calendar_view(user_id, opts \\ [])
+  GET /users/{user_id}/calendarView
+  @spec calendar_view(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Gets events in a date range for a user.
+
+  Required options:
+    :start_date_time - ISO 8601 start datetime string
+    :end_date_time   - ISO 8601 end datetime string
+
+  The date params are merged into the query parameters as
+  startDateTime and endDateTime.
+
+  Example:
+
+    {:ok, %{"value" => events}} = GraphApi.Calendar.calendar_view("user-id",
+      start_date_time: "2024-01-01T00:00:00",
+      end_date_time: "2024-01-31T23:59:59"
+    )
+
+    # With OData query
+    query = OData.new() |> OData.select(["subject", "start", "end"]) |> OData.top(50)
+    {:ok, %{"value" => events}} = GraphApi.Calendar.calendar_view("user-id",
+      start_date_time: "2024-01-01T00:00:00",
+      end_date_time: "2024-01-31T23:59:59",
+      query: query
+    )
+
+
+CALENDARS LIST
+--------------
+
+  GraphApi.Calendar.list_calendars(user_id, opts \\ [])
+  GET /users/{user_id}/calendars
+  @spec list_calendars(String.t., keyword()) :: {:ok, map()} | {:error, term()}
+  Lists a user's calendars.
+
+
+DELTA QUERY
+-----------
+
+  GraphApi.Calendar.events_delta(user_id, opts \\ [])
+  GET /users/{user_id}/events/delta
+  @spec events_delta(String.t(), keyword()) :: {:ok, Delta.delta_page()} | {:error, term()}
+  Delta query for a user's calendar events.
+
+
+EXAMPLES
+--------
+
+    # List events
+    {:ok, %{"value" => events}} = GraphApi.Calendar.list_events("user-id")
+
+    # Create event
+    {:ok, event} = GraphApi.Calendar.create_event("user-id", %{
+      "subject" => "Team Meeting",
+      "start" => %{"dateTime" => "2024-03-01T10:00:00", "timeZone" => "UTC"},
+      "end" => %{"dateTime" => "2024-03-01T11:00:00", "timeZone" => "UTC"}
+    })
+
+    # Calendar view with date range
+    {:ok, %{"value" => view}} = GraphApi.Calendar.calendar_view("user-id",
+      start_date_time: "2024-01-01T00:00:00",
+      end_date_time: "2024-01-31T23:59:59"
+    )
+
+    # List all calendars
+    {:ok, %{"value" => calendars}} = GraphApi.Calendar.list_calendars("user-id")
+
+    # Track event changes
+    {:ok, page} = GraphApi.Calendar.events_delta("user-id")

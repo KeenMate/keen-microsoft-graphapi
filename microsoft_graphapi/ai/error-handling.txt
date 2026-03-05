@@ -1,0 +1,142 @@
+ERROR HANDLING
+==============
+
+Modules: GraphApi.Error, GraphApi.Error.ApiError, GraphApi.Error.AuthError,
+         GraphApi.Error.RateLimitError, GraphApi.Response
+
+
+RETURN VALUE CONVENTION
+-----------------------
+
+All resource operations return one of:
+  {:ok, result}     - Success with response body
+  :ok               - Success with no body (204 No Content, 202 Accepted)
+  {:error, error}   - Failure with a structured error
+
+
+ERROR TYPES
+-----------
+
+GraphApi.Error.ApiError
+  Non-2xx response from the Microsoft Graph API.
+
+  Fields:
+    :status   - HTTP status code (integer)
+    :code     - Graph API error code string (e.g., "Request_ResourceNotFound")
+    :message  - Human-readable error message
+    :details  - Raw error response body (map)
+
+  Example value:
+    %GraphApi.Error.ApiError{
+      status: 404,
+      code: "Request_ResourceNotFound",
+      message: "Resource 'user-id' does not exist.",
+      details: %{"error" => %{"code" => "...", "message" => "..."}}
+    }
+
+GraphApi.Error.AuthError
+  Authentication/authorization error from Microsoft Entra ID.
+
+  Fields:
+    :status             - HTTP status code (integer)
+    :error              - OAuth error code (e.g., "invalid_client")
+    :error_description  - Human-readable description
+
+  Example value:
+    %GraphApi.Error.AuthError{
+      status: 401,
+      error: "invalid_client",
+      error_description: "The client secret is invalid."
+    }
+
+GraphApi.Error.RateLimitError
+  429 Too Many Requests after retry exhaustion.
+
+  Fields:
+    :retry_after  - Retry-After header value in seconds (integer or nil)
+    :message      - Human-readable message
+
+  Example value:
+    %GraphApi.Error.RateLimitError{
+      retry_after: 30,
+      message: "Rate limited by Microsoft Graph API"
+    }
+
+
+PATTERN MATCHING ERRORS
+-----------------------
+
+    case GraphApi.Users.get("user-id") do
+      {:ok, user} ->
+        IO.puts("Found: #{user["displayName"]}")
+
+      {:error, %GraphApi.Error.ApiError{status: 404}} ->
+        IO.puts("User not found")
+
+      {:error, %GraphApi.Error.ApiError{status: 403, code: code}} ->
+        IO.puts("Forbidden: #{code}")
+
+      {:error, %GraphApi.Error.AuthError{error: error}} ->
+        IO.puts("Auth failed: #{error}")
+
+      {:error, %GraphApi.Error.RateLimitError{retry_after: seconds}} ->
+        IO.puts("Rate limited, retry after #{seconds}s")
+
+      {:error, other} ->
+        IO.puts("Unexpected error: #{inspect(other)}")
+    end
+
+
+MATCHING BY STATUS CODE
+------------------------
+
+    case GraphApi.Users.get("user-id") do
+      {:ok, user} -> handle_user(user)
+      {:error, %{status: 404}} -> :not_found
+      {:error, %{status: 401}} -> :unauthorized
+      {:error, %{status: 429}} -> :rate_limited
+      {:error, _} -> :error
+    end
+
+
+RESPONSE NORMALIZATION
+----------------------
+
+Module: GraphApi.Response
+
+Normalizes Req responses into ok/error tuples:
+  - 200-299 with body  => {:ok, body}
+  - 202 with empty body => :ok
+  - 204 No Content      => :ok
+  - 429                  => {:error, %RateLimitError{}}
+  - 400+                 => {:error, %ApiError{}}
+  - Transport errors     => {:error, exception}
+
+
+RETRY BEHAVIOR
+--------------
+
+The Retry middleware (GraphApi.Middleware.Retry) automatically retries
+429 responses:
+  - Maximum 3 retries
+  - Uses Retry-After header for wait time when available
+  - Falls back to exponential backoff (1s, 2s, 4s)
+  - After 3 retries, the 429 response is returned as a RateLimitError
+
+The RateLimitError you receive means ALL retries have been exhausted.
+
+
+ALL ERRORS ARE EXCEPTIONS
+--------------------------
+
+All three error types implement the Exception behaviour (defexception),
+so they can be raised if desired:
+
+    {:error, error} = GraphApi.Users.get("nonexistent")
+    raise error
+    # ** (GraphApi.Error.ApiError) Graph API error (404): Request_ResourceNotFound: ...
+
+Their message/1 implementations produce readable strings:
+  ApiError:       "Graph API error (404): code=Request_ResourceNotFound: Resource not found"
+  AuthError:      "Auth error (401): invalid_client: The client secret is invalid."
+  RateLimitError: "Rate limited by Microsoft Graph API (retry after 30s)"

@@ -1,0 +1,23 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users('user-id-1')/events",
+  "value": [
+    {
+      "id": "event-id-1",
+      "subject": "Team Meeting",
+      "start": {
+        "dateTime": "2024-01-15T14:00:00.0000000",
+        "timeZone": "UTC"
+      },
+      "end": {
+        "dateTime": "2024-01-15T15:00:00.0000000",
+        "timeZone": "UTC"
+      },
+      "organizer": {
+        "emailAddress": {
+          "name": "Alice Smith",
+          "address": "alice@contoso.com"
+        }
+      }
+    }
+  ]
+}

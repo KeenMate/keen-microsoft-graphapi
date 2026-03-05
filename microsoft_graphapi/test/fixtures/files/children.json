@@ -1,0 +1,21 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#drives('drive-id-1')/root/children",
+  "value": [
+    {
+      "id": "item-id-1",
+      "name": "Documents",
+      "folder": {
+        "childCount": 5
+      },
+      "size": 0
+    },
+    {
+      "id": "item-id-2",
+      "name": "report.docx",
+      "file": {
+        "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      },
+      "size": 102400
+    }
+  ]
+}

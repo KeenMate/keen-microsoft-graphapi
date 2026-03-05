@@ -1,0 +1,101 @@
+PAGINATION
+==========
+
+Module: GraphApi.Pagination
+
+Stream-based pagination that lazily follows @odata.nextLink to fetch
+subsequent pages of results.
+
+
+FUNCTIONS
+---------
+
+  GraphApi.Pagination.stream(first_page, opts \\ [])
+  @spec stream(map(), keyword()) :: Enumerable.t()
+  Creates a lazy Stream that follows @odata.nextLink to yield all items.
+  Takes the first page response body.
+  Required options:
+    :client - A %Req.Request{} client (required)
+  Optional:
+    :as - Schema/View module to cast each item
+
+  GraphApi.Pagination.collect_all(first_page, opts \\ [])
+  @spec collect_all(map(), keyword()) :: {:ok, list()} | {:error, term()}
+  Collects all items from all pages into a single list.
+  Convenience wrapper around stream/2.
+
+  GraphApi.Pagination.extract_page(body, opts \\ [])
+  @spec extract_page(map(), keyword()) :: {list(), String.t() | nil}
+  Extracts {items, next_link} from a Graph API response body.
+  Optional: :as for casting.
+
+
+HOW IT WORKS
+------------
+
+1. First call returns a response with "value" (items) and possibly
+   "@odata.nextLink" (URL for the next page).
+
+2. Pagination.stream follows the nextLink URLs lazily, yielding
+   items from each page.
+
+3. When there is no nextLink, the stream ends.
+
+
+LAZY STREAMING
+--------------
+
+    {:ok, first_page} = GraphApi.Users.list(client: client)
+
+    all_users = GraphApi.Pagination.stream(first_page, client: client)
+      |> Enum.to_list()
+
+    # Process lazily (items fetched on demand)
+    GraphApi.Pagination.stream(first_page, client: client)
+    |> Stream.filter(fn user -> user["accountEnabled"] == true end)
+    |> Stream.take(100)
+    |> Enum.to_list()
+
+
+COLLECT ALL
+-----------
+
+    {:ok, first_page} = GraphApi.Users.list(client: client)
+    {:ok, all_users} = GraphApi.Pagination.collect_all(first_page, client: client)
+
+
+WITH SCHEMA CASTING
+-------------------
+
+    {:ok, first_page} = GraphApi.Users.list(client: client)
+
+    all_users = GraphApi.Pagination.stream(first_page,
+      client: client,
+      as: GraphApi.Schema.User
+    ) |> Enum.to_list()
+    # => [%GraphApi.Schema.User{}, ...]
+
+
+EXTRACT PAGE HELPER
+-------------------
+
+    # For manual page processing
+    {items, next_link} = GraphApi.Pagination.extract_page(response_body)
+    # items => list from "value" key
+    # next_link => @odata.nextLink URL or nil
+
+    # With casting
+    {items, next_link} = GraphApi.Pagination.extract_page(body, as: GraphApi.Schema.User)
+
+
+PAGINATION VS DELTA
+-------------------
+
+- Pagination: follows @odata.nextLink for regular list queries.
+  Use when you want all results from a single point-in-time query.
+
+- Delta: follows @odata.nextLink AND tracks changes via deltaLink.
+  Use when you want incremental change tracking over time.
+
+Both use the same @odata.nextLink mechanism for multi-page results,
+but Delta additionally manages delta tokens for change tracking.

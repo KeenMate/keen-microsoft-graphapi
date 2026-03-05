@@ -1,0 +1,193 @@
+TESTING
+=======
+
+The library uses Req.Test for stubbing HTTP calls in tests.
+Pass a pre-configured Req client via the :client option.
+
+
+BASIC PATTERN
+-------------
+
+    test "lists users" do
+      Req.Test.stub(:my_stub, fn conn ->
+        Req.Test.json(conn, %{"value" => [%{"id" => "1", "displayName" => "Alice"}]})
+      end)
+
+      client = Req.new(plug: {Req.Test, :my_stub})
+      assert {:ok, %{"value" => [user]}} = GraphApi.Users.list(client: client)
+      assert user["displayName"] == "Alice"
+    end
+
+
+THE CLIENT: OPTION
+------------------
+
+Every resource function accepts a :client option. In production, this
+defaults to GraphApi.Client.new() (which reads from app config). In tests,
+you bypass all middleware by passing a plain Req client with a test plug.
+
+    # Production: uses real config + middleware
+    GraphApi.Users.list()
+
+    # Test: uses stubbed plug, no real HTTP, no auth
+    client = Req.new(plug: {Req.Test, :stub_name})
+    GraphApi.Users.list(client: client)
+
+
+TESTING SINGLE RESOURCE
+-----------------------
+
+    test "gets a user by ID" do
+      Req.Test.stub(:graph, fn conn ->
+        assert conn.method == "GET"
+        assert String.contains?(conn.request_path, "/users/")
+
+        Req.Test.json(conn, %{
+          "id" => "abc",
+          "displayName" => "Alice",
+          "mail" => "alice@contoso.com"
+        })
+      end)
+
+      client = Req.new(plug: {Req.Test, :graph})
+      assert {:ok, user} = GraphApi.Users.get("abc", client: client)
+      assert user["displayName"] == "Alice"
+    end
+
+
+TESTING WITH SCHEMA CASTING
+----------------------------
+
+    test "casts response to schema struct" do
+      Req.Test.stub(:graph, fn conn ->
+        Req.Test.json(conn, %{
+          "id" => "abc",
+          "displayName" => "Alice",
+          "accountEnabled" => true
+        })
+      end)
+
+      client = Req.new(plug: {Req.Test, :graph})
+      assert {:ok, user} = GraphApi.Users.get("abc",
+        client: client,
+        as: GraphApi.Schema.User
+      )
+      assert %GraphApi.Schema.User{} = user
+      assert user.display_name == "Alice"
+    end
+
+
+TESTING ERROR RESPONSES
+-----------------------
+
+    test "handles 404 not found" do
+      Req.Test.stub(:graph, fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(404, Jason.encode!(%{
+          "error" => %{
+            "code" => "Request_ResourceNotFound",
+            "message" => "Resource not found"
+          }
+        }))
+      end)
+
+      client = Req.new(plug: {Req.Test, :graph})
+      assert {:error, %GraphApi.Error.ApiError{status: 404}} =
+        GraphApi.Users.get("nonexistent", client: client)
+    end
+
+
+TESTING BATCH REQUESTS
+----------------------
+
+    test "executes batch" do
+      Req.Test.stub(:graph, fn conn ->
+        Req.Test.json(conn, %{
+          "responses" => [
+            %{"id" => "1", "status" => 200, "body" => %{"value" => [%{"id" => "u1"}]}},
+            %{"id" => "2", "status" => 200, "body" => %{"id" => "g1"}}
+          ]
+        })
+      end)
+
+      client = Req.new(plug: {Req.Test, :graph})
+
+      {:ok, responses} =
+        GraphApi.Batch.new()
+        |> GraphApi.Batch.add("1", GraphApi.Users.list_query())
+        |> GraphApi.Batch.add("2", GraphApi.Groups.get_query("g1"))
+        |> GraphApi.Batch.execute(client: client)
+
+      assert %{status: 200} = GraphApi.Batch.get(responses, "1")
+    end
+
+
+TESTING SEND MAIL
+-----------------
+
+    test "sends mail successfully" do
+      Req.Test.stub(:graph, fn conn ->
+        assert conn.method == "POST"
+        assert String.contains?(conn.request_path, "/sendMail")
+        Plug.Conn.send_resp(conn, 202, "")
+      end)
+
+      client = Req.new(plug: {Req.Test, :graph})
+      assert :ok = GraphApi.Mail.send_mail("user-id", %{
+        "subject" => "Test",
+        "body" => %{"contentType" => "Text", "content" => "Hi"},
+        "toRecipients" => [%{"emailAddress" => %{"address" => "bob@test.com"}}]
+      }, client: client)
+    end
+
+
+TESTING DELTA QUERIES
+---------------------
+
+    test "delta query returns changes" do
+      Req.Test.stub(:graph, fn conn ->
+        Req.Test.json(conn, %{
+          "value" => [%{"id" => "1", "displayName" => "Changed"}],
+          "@odata.deltaLink" => "https://graph.microsoft.com/v1.0/users/delta?$deltatoken=abc"
+        })
+      end)
+
+      client = Req.new(plug: {Req.Test, :graph})
+      assert {:ok, page} = GraphApi.Delta.query("/users/delta", client: client)
+      assert length(page.items) == 1
+      assert page.delta_link != nil
+    end
+
+
+TESTING WEBHOOKS
+----------------
+
+Webhook functions do not make HTTP calls, so they can be tested directly:
+
+    test "classifies validation request" do
+      params = %{"validationToken" => "my-token"}
+      assert {:validate, "my-token"} = GraphApi.Webhook.classify(params)
+    end
+
+    test "parses notifications" do
+      body = %{"value" => [%{"subscriptionId" => "sub-1", "changeType" => "updated"}]}
+      notifications = GraphApi.Webhook.parse_notifications(body)
+      assert length(notifications) == 1
+    end
+
+    test "validates client state" do
+      notification = %{"clientState" => "my-secret"}
+      assert GraphApi.Webhook.valid_client_state?(notification, "my-secret")
+      refute GraphApi.Webhook.valid_client_state?(notification, "wrong-secret")
+    end
+
+
+KEY TESTING PRINCIPLES
+----------------------
+
+1. Always pass client: to bypass app config and real HTTP
+2. Use Req.Test.stub for test doubles
+3. Req.Test.json for success responses
+4. Plug.Conn.send_resp for error responses with specific status codes
+5. Webhook functions can be tested without stubs (pure functions)

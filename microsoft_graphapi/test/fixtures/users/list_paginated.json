@@ -1,0 +1,16 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users",
+  "@odata.nextLink": "https://graph.microsoft.com/v1.0/users?$skiptoken=abc123",
+  "value": [
+    {
+      "id": "user-id-1",
+      "displayName": "Alice Smith",
+      "mail": "alice@contoso.com"
+    },
+    {
+      "id": "user-id-2",
+      "displayName": "Bob Jones",
+      "mail": "bob@contoso.com"
+    }
+  ]
+}

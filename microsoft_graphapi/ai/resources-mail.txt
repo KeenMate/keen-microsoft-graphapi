@@ -1,0 +1,101 @@
+MAIL RESOURCE
+=============
+
+Module: GraphApi.Mail
+Endpoints: 11 functions (each has a _query variant for batch requests)
+
+All functions accept opts with: :client, :query, :as, :access_token, :client_request_id
+
+
+MESSAGES
+--------
+
+  GraphApi.Mail.list_messages(user_id, opts \\ [])
+  GET /users/{user_id}/messages
+  @spec list_messages(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists messages in a user's mailbox.
+
+  GraphApi.Mail.get_message(user_id, message_id, opts \\ [])
+  GET /users/{user_id}/messages/{message_id}
+  @spec get_message(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Gets a specific message.
+
+  GraphApi.Mail.send_mail(user_id, message, opts \\ [])
+  POST /users/{user_id}/sendMail
+  @spec send_mail(String.t(), map(), keyword()) :: :ok | {:error, term()}
+  Sends a mail on behalf of a user.
+  The message map should include :subject, :body, and :toRecipients.
+  Optional :save_to_sent_items keyword in opts (default: true).
+  Body sent: {"message": {...}, "saveToSentItems": true}
+  Note: atom keys in the message map are automatically stringified.
+
+  GraphApi.Mail.create_draft(user_id, message, opts \\ [])
+  POST /users/{user_id}/messages
+  @spec create_draft(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Creates a draft message in the user's Drafts folder.
+
+  GraphApi.Mail.delete_message(user_id, message_id, opts \\ [])
+  DELETE /users/{user_id}/messages/{message_id}
+  @spec delete_message(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  Deletes a message.
+
+
+FOLDERS
+-------
+
+  GraphApi.Mail.list_mail_folders(user_id, opts \\ [])
+  GET /users/{user_id}/mailFolders
+  @spec list_mail_folders(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists mail folders for a user.
+
+  GraphApi.Mail.list_folder_messages(user_id, folder_id, opts \\ [])
+  GET /users/{user_id}/mailFolders/{folder_id}/messages
+  @spec list_folder_messages(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists messages in a specific mail folder.
+
+
+DELTA QUERIES
+-------------
+
+  GraphApi.Mail.messages_delta(user_id, opts \\ [])
+  GET /users/{user_id}/messages/delta
+  @spec messages_delta(String.t(), keyword()) :: {:ok, Delta.delta_page()} | {:error, term()}
+  Delta query for a user's messages.
+
+  GraphApi.Mail.folder_messages_delta(user_id, folder_id, opts \\ [])
+  GET /users/{user_id}/mailFolders/{folder_id}/messages/delta
+  @spec folder_messages_delta(String.t(), String.t(), keyword()) :: {:ok, Delta.delta_page()} | {:error, term()}
+  Delta query for messages in a specific mail folder.
+
+
+EXAMPLES
+--------
+
+    # List messages
+    {:ok, %{"value" => messages}} = GraphApi.Mail.list_messages("user-id")
+
+    # Send mail (atom keys are auto-stringified)
+    :ok = GraphApi.Mail.send_mail("user-id", %{
+      subject: "Hello",
+      body: %{contentType: "Text", content: "Hi there"},
+      toRecipients: [%{emailAddress: %{address: "bob@contoso.com"}}]
+    })
+
+    # Send mail with string keys
+    :ok = GraphApi.Mail.send_mail("user-id", %{
+      "subject" => "Hello",
+      "body" => %{"contentType" => "Text", "content" => "Hi there"},
+      "toRecipients" => [%{"emailAddress" => %{"address" => "bob@contoso.com"}}]
+    })
+
+    # Create draft
+    {:ok, draft} = GraphApi.Mail.create_draft("user-id", %{
+      subject: "Draft Subject",
+      body: %{contentType: "Text", content: "Draft body"}
+    })
+
+    # List folders
+    {:ok, %{"value" => folders}} = GraphApi.Mail.list_mail_folders("user-id")
+
+    # Track message changes
+    {:ok, page} = GraphApi.Mail.messages_delta("user-id")

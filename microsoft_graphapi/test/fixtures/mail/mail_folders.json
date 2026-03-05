@@ -1,0 +1,17 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users('user-id-1')/mailFolders",
+  "value": [
+    {
+      "id": "folder-id-1",
+      "displayName": "Inbox",
+      "totalItemCount": 42,
+      "unreadItemCount": 5
+    },
+    {
+      "id": "folder-id-2",
+      "displayName": "Sent Items",
+      "totalItemCount": 100,
+      "unreadItemCount": 0
+    }
+  ]
+}
