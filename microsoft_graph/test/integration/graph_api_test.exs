@@ -1,4 +1,4 @@
-defmodule MicrosoftGraph.Integration.GraphApiTest do
+defmodule GraphApi.Integration.GraphApiTest do
   @moduledoc """
   Integration tests against a real Microsoft Graph API tenant.
 
@@ -12,7 +12,7 @@ defmodule MicrosoftGraph.Integration.GraphApiTest do
   """
   use ExUnit.Case
 
-  alias MicrosoftGraph.{Groups, OData, Pagination, Users}
+  alias GraphApi.{Groups, OData, Pagination, Users}
 
   @moduletag :integration
   @moduletag timeout: :timer.minutes(10)
@@ -60,13 +60,13 @@ defmodule MicrosoftGraph.Integration.GraphApiTest do
       end
 
     config =
-      MicrosoftGraph.Config.new!(
+      GraphApi.Config.new!(
         tenant_id: tenant_id,
         client_id: client_id,
         client_secret: client_secret
       )
 
-    client = MicrosoftGraph.Client.new(config: config)
+    client = GraphApi.Client.new(config: config)
 
     %{
       client: client,
@@ -80,7 +80,7 @@ defmodule MicrosoftGraph.Integration.GraphApiTest do
 
   describe "auth" do
     test "acquires token successfully", %{config: config} do
-      assert {:ok, token} = MicrosoftGraph.Auth.acquire_token(config)
+      assert {:ok, token} = GraphApi.Auth.acquire_token(config)
       assert is_binary(token.access_token)
       assert token.expires_in > 0
     end

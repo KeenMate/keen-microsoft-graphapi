@@ -22,7 +22,7 @@ defmodule Mix.Tasks.Graph.Cleanup do
   """
   use Mix.Task
 
-  alias MicrosoftGraph.{Config, Client, Groups, OData, Users}
+  alias GraphApi.{Config, Client, Groups, OData, Users}
 
   @user_prefix "Integration Test User"
   @group_prefix "Integration Test Group"

@@ -1,5 +1,5 @@
 # Load .env.test if it exists (credentials for integration tests)
-MicrosoftGraph.Test.EnvLoader.load()
+GraphApi.Test.EnvLoader.load()
 
 # Exclude integration tests by default.
 # Run with:

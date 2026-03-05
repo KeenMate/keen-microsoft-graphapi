@@ -1,0 +1,397 @@
+DOCUMENTATION INDEX
+===================
+
+Quick reference for finding documentation on specific topics.
+Package: keen_microsoft_graphapi (Elixir)
+
+FILE OVERVIEW
+-------------
+getting-started.txt          - Installation, config, first API call, beta endpoint
+client-config.txt            - GraphApi.Client, GraphApi.Config, base_url, api_version
+authentication.txt           - App-only auth, delegated auth, TokenStore, access_token
+resources-users.txt          - All Users functions with signatures and endpoint paths
+resources-groups.txt         - All Groups functions with signatures and endpoint paths
+resources-mail.txt           - All Mail functions with signatures and endpoint paths
+resources-calendar.txt       - All Calendar functions with signatures and endpoint paths
+resources-files.txt          - All Files functions with signatures and endpoint paths
+resources-subscriptions.txt  - Subscriptions CRUD + Webhook handling
+odata-queries.txt            - OData builder, Filter builder, schema-aware filtering
+batch-requests.txt           - Batch.new, add, execute, depends_on, response handling
+delta-queries.txt            - Delta.query, collect_all, stream, delta_link handling
+pagination.txt               - Pagination.stream, collect_all, @odata.nextLink
+schema-casting.txt           - :as option, Schema modules, Views, field projections
+error-handling.txt           - Error types, pattern matching, retry middleware
+testing.txt                  - Req.Test stubs, client: option, test patterns
+middleware.txt               - Auth, ErrorHandling, and Retry middleware
+
+KEYWORD INDEX
+=============
+
+A
+-
+access_token -> authentication.txt, client-config.txt
+add_member -> resources-groups.txt
+add_owner -> resources-groups.txt
+add_permission -> resources-files.txt
+ApiError -> error-handling.txt
+api_version -> client-config.txt, getting-started.txt
+app_role_assignments -> resources-users.txt, resources-groups.txt
+as (option) -> schema-casting.txt
+assign_license -> resources-users.txt, resources-groups.txt
+assign_manager -> resources-users.txt
+Auth -> authentication.txt, middleware.txt
+AuthError -> error-handling.txt
+authorize_url -> authentication.txt
+
+B
+-
+base_url -> client-config.txt
+Batch -> batch-requests.txt
+Batch.add -> batch-requests.txt
+Batch.execute -> batch-requests.txt
+Batch.get -> batch-requests.txt
+Batch.new -> batch-requests.txt
+Batch.Request -> batch-requests.txt
+beta -> client-config.txt, getting-started.txt
+
+C
+-
+Calendar -> resources-calendar.txt
+calendar_view -> resources-calendar.txt
+change_password -> resources-users.txt
+check_member_groups -> resources-users.txt, resources-groups.txt
+check_member_objects -> resources-users.txt, resources-groups.txt
+classify -> resources-subscriptions.txt
+Client -> client-config.txt
+client: option -> client-config.txt, testing.txt
+client_credentials -> authentication.txt
+client_request_id -> client-config.txt
+collect_all -> pagination.txt, delta-queries.txt
+Config -> client-config.txt
+Config.from_env! -> client-config.txt
+Config.new! -> client-config.txt
+copy_item -> resources-files.txt
+count -> odata-queries.txt
+create (Users) -> resources-users.txt
+create (Groups) -> resources-groups.txt
+create (Subscriptions) -> resources-subscriptions.txt
+create_draft -> resources-mail.txt
+create_event -> resources-calendar.txt
+create_folder -> resources-files.txt
+create_sharing_link -> resources-files.txt
+create_upload_session -> resources-files.txt
+
+D
+-
+Delegated -> authentication.txt
+delete (Users) -> resources-users.txt
+delete (Groups) -> resources-groups.txt
+delete (Subscriptions) -> resources-subscriptions.txt
+delete_event -> resources-calendar.txt
+delete_item -> resources-files.txt
+delete_message -> resources-mail.txt
+delete_permission -> resources-files.txt
+Delta -> delta-queries.txt
+delta (Users) -> resources-users.txt, delta-queries.txt
+delta (Groups) -> resources-groups.txt, delta-queries.txt
+delta_link -> delta-queries.txt
+depends_on -> batch-requests.txt
+download_content -> resources-files.txt
+drive_delta -> resources-files.txt, delta-queries.txt
+
+E
+-
+ErrorHandling middleware -> middleware.txt, error-handling.txt
+errors -> error-handling.txt
+events_delta -> resources-calendar.txt, delta-queries.txt
+exchange_code -> authentication.txt
+expand -> odata-queries.txt
+export_personal_data -> resources-users.txt
+
+F
+-
+Files -> resources-files.txt
+filter -> odata-queries.txt
+Filter -> odata-queries.txt
+Filter.new -> odata-queries.txt
+Filter.where -> odata-queries.txt
+Filter.or_where -> odata-queries.txt
+folder_messages_delta -> resources-mail.txt, delta-queries.txt
+from_env! -> client-config.txt
+from_map -> schema-casting.txt
+
+G
+-
+get (Users) -> resources-users.txt
+get (Groups) -> resources-groups.txt
+get (Subscriptions) -> resources-subscriptions.txt
+get_drive -> resources-files.txt
+get_event -> resources-calendar.txt
+get_item -> resources-files.txt
+get_item_by_path -> resources-files.txt
+get_manager -> resources-users.txt
+get_member_groups -> resources-users.txt, resources-groups.txt
+get_member_objects -> resources-users.txt, resources-groups.txt
+get_message -> resources-mail.txt
+get_photo -> resources-users.txt
+get_photo_content -> resources-users.txt
+get_shared_item -> resources-files.txt
+get_special_folder -> resources-files.txt
+Groups -> resources-groups.txt
+
+I
+-
+Installation -> getting-started.txt
+
+K
+-
+keen_microsoft_graphapi -> getting-started.txt
+
+L
+-
+list (Users) -> resources-users.txt
+list (Groups) -> resources-groups.txt
+list (Subscriptions) -> resources-subscriptions.txt
+list_app_role_assignments -> resources-users.txt, resources-groups.txt
+list_authentication_methods -> resources-users.txt
+list_calendars -> resources-calendar.txt
+list_children -> resources-files.txt
+list_direct_reports -> resources-users.txt
+list_drives -> resources-files.txt
+list_events -> resources-calendar.txt
+list_folder_messages -> resources-mail.txt
+list_license_details -> resources-users.txt
+list_mail_folders -> resources-mail.txt
+list_member_of -> resources-users.txt, resources-groups.txt
+list_members -> resources-groups.txt
+list_messages -> resources-mail.txt
+list_oauth2_permission_grants -> resources-users.txt
+list_owners -> resources-groups.txt
+list_permission_grants -> resources-groups.txt
+list_permissions -> resources-files.txt
+list_root_children -> resources-files.txt
+list_scoped_role_member_of -> resources-users.txt
+list_thumbnails -> resources-files.txt
+list_transitive_member_of -> resources-users.txt, resources-groups.txt
+list_transitive_members -> resources-groups.txt
+list_versions -> resources-files.txt
+
+M
+-
+Mail -> resources-mail.txt
+members_delta -> resources-groups.txt, delta-queries.txt
+messages_delta -> resources-mail.txt, delta-queries.txt
+middleware -> middleware.txt
+multi-tenant -> client-config.txt, getting-started.txt
+
+N
+-
+nextLink -> pagination.txt
+NimbleOptions -> client-config.txt
+
+O
+-
+OData -> odata-queries.txt
+OData.count -> odata-queries.txt
+OData.expand -> odata-queries.txt
+OData.filter -> odata-queries.txt
+OData.new -> odata-queries.txt
+OData.orderby -> odata-queries.txt
+OData.search -> odata-queries.txt
+OData.select -> odata-queries.txt
+OData.skip -> odata-queries.txt
+OData.to_params -> odata-queries.txt
+OData.top -> odata-queries.txt
+orderby -> odata-queries.txt
+
+P
+-
+Pagination -> pagination.txt
+Pagination.collect_all -> pagination.txt
+Pagination.stream -> pagination.txt
+parse_notifications -> resources-subscriptions.txt
+
+Q
+-
+_query variants -> batch-requests.txt
+
+R
+-
+RateLimitError -> error-handling.txt
+refresh_token -> authentication.txt
+remove_manager -> resources-users.txt
+remove_member -> resources-groups.txt
+remove_owner -> resources-groups.txt
+renew (Groups) -> resources-groups.txt
+renew (Subscriptions) -> resources-subscriptions.txt
+Req -> client-config.txt, testing.txt
+Req.Test -> testing.txt
+resolve_client -> client-config.txt
+Response -> error-handling.txt
+Retry middleware -> middleware.txt
+revoke_sign_in_sessions -> resources-users.txt
+
+S
+-
+Schema -> schema-casting.txt
+Schema.User -> schema-casting.txt
+search (Files) -> resources-files.txt
+search (OData) -> odata-queries.txt
+select -> odata-queries.txt
+send_mail -> resources-mail.txt
+skip -> odata-queries.txt
+stream -> pagination.txt, delta-queries.txt
+Subscriptions -> resources-subscriptions.txt
+
+T
+-
+testing -> testing.txt
+to_map -> schema-casting.txt
+to_params -> odata-queries.txt
+TokenStore -> authentication.txt
+top -> odata-queries.txt
+
+U
+-
+update (Users) -> resources-users.txt
+update (Groups) -> resources-groups.txt
+update_event -> resources-calendar.txt
+update_item -> resources-files.txt
+update_photo_content -> resources-users.txt
+upload_small -> resources-files.txt
+Users -> resources-users.txt
+
+V
+-
+valid_client_state? -> resources-subscriptions.txt
+View -> schema-casting.txt
+
+W
+-
+Webhook -> resources-subscriptions.txt
+
+COMMON QUESTIONS
+================
+
+Q: How do I get started?
+A: -> getting-started.txt
+
+Q: How do I configure for a single tenant?
+A: -> getting-started.txt, client-config.txt
+
+Q: How do I configure for multiple tenants?
+A: -> client-config.txt, getting-started.txt
+
+Q: How do I authenticate with client credentials?
+A: -> authentication.txt
+
+Q: How do I authenticate on behalf of a user (delegated)?
+A: -> authentication.txt
+
+Q: How do I list or get users?
+A: -> resources-users.txt
+
+Q: How do I manage group members?
+A: -> resources-groups.txt
+
+Q: How do I send an email?
+A: -> resources-mail.txt
+
+Q: How do I list calendar events or get a calendar view?
+A: -> resources-calendar.txt
+
+Q: How do I upload or download files?
+A: -> resources-files.txt
+
+Q: How do I create webhook subscriptions?
+A: -> resources-subscriptions.txt
+
+Q: How do I build OData query parameters?
+A: -> odata-queries.txt
+
+Q: How do I filter with snake_case field names?
+A: -> odata-queries.txt
+
+Q: How do I send multiple requests in one HTTP call?
+A: -> batch-requests.txt
+
+Q: How do I track incremental changes (delta queries)?
+A: -> delta-queries.txt
+
+Q: How do I paginate through all results?
+A: -> pagination.txt
+
+Q: How do I cast JSON responses into Elixir structs?
+A: -> schema-casting.txt
+
+Q: How do I define a view with a subset of fields?
+A: -> schema-casting.txt
+
+Q: How do I handle errors and retries?
+A: -> error-handling.txt
+
+Q: How do I test my code that calls the Graph API?
+A: -> testing.txt
+
+Q: How does the auth middleware work?
+A: -> middleware.txt
+
+Q: How do I use the beta Graph API endpoint?
+A: -> getting-started.txt, client-config.txt
+
+FEATURES BY CATEGORY
+====================
+
+GETTING STARTED
+- Installation and setup -> getting-started.txt
+- Single-tenant config -> getting-started.txt
+- Multi-tenant config -> getting-started.txt, client-config.txt
+- First API call -> getting-started.txt
+- Beta endpoint -> getting-started.txt, client-config.txt
+
+CLIENT & CONFIGURATION
+- Client creation -> client-config.txt
+- Config struct -> client-config.txt
+- API version selection -> client-config.txt
+- Base URL customization -> client-config.txt
+
+AUTHENTICATION
+- Client credentials (app-only) -> authentication.txt
+- Delegated auth (OAuth code flow) -> authentication.txt
+- Token management -> authentication.txt
+- TokenStore GenServer -> authentication.txt
+- Per-request access_token -> authentication.txt
+
+RESOURCE MODULES
+- Users CRUD + related -> resources-users.txt
+- Groups CRUD + members/owners -> resources-groups.txt
+- Mail messages + send + folders -> resources-mail.txt
+- Calendar events + views -> resources-calendar.txt
+- Files/OneDrive/SharePoint -> resources-files.txt
+- Subscriptions + Webhooks -> resources-subscriptions.txt
+
+QUERY BUILDING
+- OData parameters -> odata-queries.txt
+- Schema-aware filters -> odata-queries.txt
+- Filter builder -> odata-queries.txt
+
+DATA OPERATIONS
+- Batch requests -> batch-requests.txt
+- Delta (change tracking) -> delta-queries.txt
+- Pagination (streaming) -> pagination.txt
+
+SCHEMA & CASTING
+- Schema structs -> schema-casting.txt
+- View projections -> schema-casting.txt
+- Nested casting -> schema-casting.txt
+- from_map / to_map -> schema-casting.txt
+
+ERROR HANDLING & MIDDLEWARE
+- Error types -> error-handling.txt
+- Retry logic -> error-handling.txt, middleware.txt
+- Auth middleware -> middleware.txt
+- Error handling middleware -> middleware.txt
+
+TESTING
+- Req.Test stubs -> testing.txt
+- Client injection -> testing.txt

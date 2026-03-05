@@ -1,0 +1,143 @@
+CLIENT AND CONFIGURATION
+========================
+
+Modules: GraphApi.Client, GraphApi.Config, GraphApi.Resource
+
+
+GRAPHAPI.CLIENT
+---------------
+
+Builds a configured %Req.Request{} with all middleware steps attached.
+
+  GraphApi.Client.new(opts \\ [])
+  @spec new(keyword()) :: Req.Request.t()
+
+Options:
+  :config       - A %GraphApi.Config{} struct. If not provided, reads from
+                  application environment. If none found, creates client without
+                  client credentials (for delegated access_token usage).
+  :token_store  - The token store server (default: GraphApi.TokenStore)
+  :api_version  - :v1 or :beta (default: :v1). Ignored when :config is provided
+                  (uses config's base_url instead).
+
+The returned client is a %Req.Request{} struct with these middleware attached:
+  1. GraphApi.Middleware.Auth       - injects Authorization header
+  2. GraphApi.Middleware.ErrorHandling - parses error responses
+  3. GraphApi.Middleware.Retry      - retries 429 responses
+
+Examples:
+
+    # App-only (reads config from application environment)
+    client = GraphApi.Client.new()
+
+    # Explicit config (multi-tenant)
+    config = GraphApi.Config.new!(tenant_id: "...", client_id: "...", client_secret: "...")
+    client = GraphApi.Client.new(config: config)
+
+    # Delegated permissions (no config needed)
+    client = GraphApi.Client.new()
+    GraphApi.Users.get("me", client: client, access_token: user_token)
+
+    # Beta endpoint
+    client = GraphApi.Client.new(api_version: :beta)
+
+
+GRAPHAPI.CONFIG
+---------------
+
+Configuration struct validated with NimbleOptions.
+
+  GraphApi.Config.new!(opts)
+  @spec new!(keyword()) :: GraphApi.Config.t()
+  Raises on invalid options.
+
+  GraphApi.Config.new(opts)
+  @spec new(keyword()) :: {:ok, GraphApi.Config.t()} | {:error, NimbleOptions.ValidationError.t()}
+
+  GraphApi.Config.from_env!()
+  @spec from_env!() :: GraphApi.Config.t()
+  Reads from Application.get_env(:keen_microsoft_graphapi, :config). Raises if missing.
+
+  GraphApi.Config.base_url_for(api_version)
+  @spec base_url_for(:v1 | :beta) :: String.t()
+  Returns "https://graph.microsoft.com/v1.0" or "https://graph.microsoft.com/beta"
+
+  GraphApi.Config.schema()
+  @spec schema() :: keyword()
+  Returns the NimbleOptions schema.
+
+Config fields:
+  :tenant_id      - Azure AD tenant ID (required, string)
+  :client_id      - Application (client) ID (required, string)
+  :client_secret  - Client secret (required, string)
+  :scope          - OAuth scope (default: "https://graph.microsoft.com/.default")
+  :api_version    - :v1 or :beta (default: :v1)
+  :base_url       - Graph API base URL (default: derived from api_version)
+
+Struct type:
+
+    %GraphApi.Config{
+      tenant_id: String.t(),
+      client_id: String.t(),
+      client_secret: String.t(),
+      scope: String.t(),
+      api_version: :v1 | :beta,
+      base_url: String.t()
+    }
+
+Examples:
+
+    # From application config
+    config = GraphApi.Config.from_env!()
+
+    # Explicit
+    config = GraphApi.Config.new!(
+      tenant_id: "your-tenant-id",
+      client_id: "your-client-id",
+      client_secret: "your-secret"
+    )
+
+    # Beta
+    config = GraphApi.Config.new!(
+      tenant_id: "your-tenant-id",
+      client_id: "your-client-id",
+      client_secret: "your-secret",
+      api_version: :beta
+    )
+
+
+RESOLVE_CLIENT
+--------------
+
+Module: GraphApi.Resource (internal)
+
+  GraphApi.Resource.resolve_client(opts)
+  @spec resolve_client(keyword()) :: Req.Request.t()
+
+If opts[:client] is present, returns it.
+Otherwise builds a new client from application config via GraphApi.Client.new().
+
+
+CLIENT_REQUEST_ID
+-----------------
+
+For request correlation, pass :client_request_id option to any resource function:
+
+    # Auto-generate a UUID
+    GraphApi.Users.list(client_request_id: true)
+
+    # Custom ID
+    GraphApi.Users.list(client_request_id: "my-correlation-id")
+
+This adds a "client-request-id" HTTP header to the request.
+
+
+API VERSION PER REQUEST
+-----------------------
+
+You can override the API version for a single request without creating
+a new client:
+
+    GraphApi.Users.list(api_version: :beta)
+
+This overrides the base URL for that specific call.

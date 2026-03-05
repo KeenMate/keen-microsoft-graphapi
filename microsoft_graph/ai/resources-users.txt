@@ -1,0 +1,224 @@
+USERS RESOURCE
+==============
+
+Module: GraphApi.Users
+Endpoints: 30 functions (each has a _query variant for batch requests)
+
+All functions accept opts with: :client, :query, :as, :access_token, :client_request_id
+
+
+CRUD OPERATIONS
+---------------
+
+  GraphApi.Users.list(opts \\ [])
+  GET /users
+  @spec list(keyword()) :: {:ok, map()} | {:error, term()}
+  Lists users in the organization.
+
+  GraphApi.Users.get(user_id, opts \\ [])
+  GET /users/{user_id}
+  @spec get(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Gets a user by ID or userPrincipalName.
+
+  GraphApi.Users.create(attrs, opts \\ [])
+  POST /users
+  @spec create(map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Creates a new user.
+
+  GraphApi.Users.update(user_id, attrs, opts \\ [])
+  PATCH /users/{user_id}
+  @spec update(String.t(), map(), keyword()) :: {:ok, map()} | :ok | {:error, term()}
+  Updates a user.
+
+  GraphApi.Users.delete(user_id, opts \\ [])
+  DELETE /users/{user_id}
+  @spec delete(String.t(), keyword()) :: :ok | {:error, term()}
+  Deletes a user.
+
+
+MANAGER
+-------
+
+  GraphApi.Users.get_manager(user_id, opts \\ [])
+  GET /users/{user_id}/manager
+  @spec get_manager(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Gets a user's manager.
+
+  GraphApi.Users.assign_manager(user_id, manager_id, opts \\ [])
+  PUT /users/{user_id}/manager/$ref
+  @spec assign_manager(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  Assigns a manager to a user. Body: {"@odata.id": ".../users/{manager_id}"}
+
+  GraphApi.Users.remove_manager(user_id, opts \\ [])
+  DELETE /users/{user_id}/manager/$ref
+  @spec remove_manager(String.t(), keyword()) :: :ok | {:error, term()}
+  Removes a user's manager assignment.
+
+
+DIRECTORY MEMBERSHIP
+--------------------
+
+  GraphApi.Users.list_direct_reports(user_id, opts \\ [])
+  GET /users/{user_id}/directReports
+  @spec list_direct_reports(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists a user's direct reports.
+
+  GraphApi.Users.list_member_of(user_id, opts \\ [])
+  GET /users/{user_id}/memberOf
+  @spec list_member_of(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists groups and directory roles the user is a member of.
+
+  GraphApi.Users.list_transitive_member_of(user_id, opts \\ [])
+  GET /users/{user_id}/transitiveMemberOf
+  @spec list_transitive_member_of(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists groups and directory roles the user is a transitive member of.
+
+  GraphApi.Users.get_member_objects(user_id, attrs, opts \\ [])
+  POST /users/{user_id}/getMemberObjects
+  @spec get_member_objects(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Returns all group and directory role IDs (transitive).
+
+  GraphApi.Users.get_member_groups(user_id, attrs, opts \\ [])
+  POST /users/{user_id}/getMemberGroups
+  @spec get_member_groups(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Returns all group IDs (transitive).
+
+  GraphApi.Users.check_member_objects(user_id, attrs, opts \\ [])
+  POST /users/{user_id}/checkMemberObjects
+  @spec check_member_objects(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Checks membership in a list of group or directory role IDs.
+
+  GraphApi.Users.check_member_groups(user_id, attrs, opts \\ [])
+  POST /users/{user_id}/checkMemberGroups
+  @spec check_member_groups(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Checks membership in a list of group IDs.
+
+
+PHOTOS
+------
+
+  GraphApi.Users.get_photo(user_id, opts \\ [])
+  GET /users/{user_id}/photo
+  @spec get_photo(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Gets a user's photo metadata.
+
+  GraphApi.Users.get_photo_content(user_id, opts \\ [])
+  GET /users/{user_id}/photo/$value
+  @spec get_photo_content(String.t(), keyword()) :: {:ok, binary()} | {:error, term()}
+  Gets a user's photo binary content. (No _query variant)
+
+  GraphApi.Users.update_photo_content(user_id, content, opts \\ [])
+  PUT /users/{user_id}/photo/$value
+  @spec update_photo_content(String.t(), binary(), keyword()) :: :ok | {:error, term()}
+  Updates a user's photo with binary content. Content-Type: image/jpeg. (No _query variant)
+
+
+LICENSES
+--------
+
+  GraphApi.Users.assign_license(user_id, attrs, opts \\ [])
+  POST /users/{user_id}/assignLicense
+  @spec assign_license(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Assigns licenses to a user.
+
+  GraphApi.Users.list_license_details(user_id, opts \\ [])
+  GET /users/{user_id}/licenseDetails
+  @spec list_license_details(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists license details for a user.
+
+
+APP ROLE ASSIGNMENTS
+--------------------
+
+  GraphApi.Users.list_app_role_assignments(user_id, opts \\ [])
+  GET /users/{user_id}/appRoleAssignments
+  @spec list_app_role_assignments(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists app role assignments for a user.
+
+  GraphApi.Users.add_app_role_assignment(user_id, attrs, opts \\ [])
+  POST /users/{user_id}/appRoleAssignments
+  @spec add_app_role_assignment(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  Adds an app role assignment to a user.
+
+  GraphApi.Users.remove_app_role_assignment(user_id, assignment_id, opts \\ [])
+  DELETE /users/{user_id}/appRoleAssignments/{assignment_id}
+  @spec remove_app_role_assignment(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  Removes an app role assignment from a user.
+
+
+PERMISSION GRANTS
+-----------------
+
+  GraphApi.Users.list_oauth2_permission_grants(user_id, opts \\ [])
+  GET /users/{user_id}/oauth2PermissionGrants
+  @spec list_oauth2_permission_grants(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists delegated permission grants (oauth2PermissionGrants) for a user.
+
+
+ACCOUNT MANAGEMENT
+------------------
+
+  GraphApi.Users.revoke_sign_in_sessions(user_id, opts \\ [])
+  POST /users/{user_id}/revokeSignInSessions
+  @spec revoke_sign_in_sessions(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Revokes all sign-in sessions for a user.
+
+  GraphApi.Users.change_password(user_id, attrs, opts \\ [])
+  POST /users/{user_id}/changePassword
+  @spec change_password(String.t(), map(), keyword()) :: :ok | {:error, term()}
+  Changes a user's password.
+
+  GraphApi.Users.export_personal_data(user_id, attrs, opts \\ [])
+  POST /users/{user_id}/exportPersonalData
+  @spec export_personal_data(String.t(), map(), keyword()) :: :ok | {:error, term()}
+  Exports a user's personal data.
+
+
+SCOPED ROLES
+------------
+
+  GraphApi.Users.list_scoped_role_member_of(user_id, opts \\ [])
+  GET /users/{user_id}/scopedRoleMemberOf
+  @spec list_scoped_role_member_of(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists scoped-role memberships for a user.
+
+
+AUTHENTICATION METHODS
+----------------------
+
+  GraphApi.Users.list_authentication_methods(user_id, opts \\ [])
+  GET /users/{user_id}/authentication/methods
+  @spec list_authentication_methods(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  Lists authentication methods registered for a user.
+
+
+DELTA QUERY
+-----------
+
+  GraphApi.Users.delta(opts \\ [])
+  GET /users/delta
+  @spec delta(keyword()) :: {:ok, Delta.delta_page()} | {:error, term()}
+  Delta query for users. Returns changes since last sync.
+
+
+EXAMPLES
+--------
+
+    # List users with OData query
+    alias GraphApi.OData
+    query = OData.new() |> OData.select(["displayName", "mail"]) |> OData.top(10)
+    {:ok, response} = GraphApi.Users.list(query: query)
+
+    # Get user with schema casting
+    {:ok, user} = GraphApi.Users.get("user@contoso.com", as: GraphApi.Schema.User)
+
+    # Multi-tenant
+    client = GraphApi.Client.new(config: config)
+    {:ok, users} = GraphApi.Users.list(client: client)
+
+    # Delegated
+    {:ok, me} = GraphApi.Users.get("me", access_token: user_token)
+
+    # Batch variant
+    request = GraphApi.Users.list_query(query: query, as: GraphApi.Schema.User)
+    # => %Batch.Request{method: "GET", url: "/users", ...}

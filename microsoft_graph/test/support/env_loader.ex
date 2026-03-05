@@ -1,4 +1,4 @@
-defmodule MicrosoftGraph.Test.EnvLoader do
+defmodule GraphApi.Test.EnvLoader do
   @moduledoc """
   Loads environment variables from a `.env.test` file at the project root.
 

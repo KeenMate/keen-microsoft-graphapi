@@ -24,7 +24,11 @@
       "Bash(mix graph.gen.schema:*)",
       "Bash(powershell -c \"Get-ChildItem ''C:\\\\Git\\\\KM\\\\microsoft-graphapi'' -Name\")",
       "Bash(ls:*)",
-      "Bash(env:*)"
+      "Bash(env:*)",
+      "Bash(xargs sed:*)",
+      "Bash(sed:*)",
+      "Bash(mv:*)",
+      "Bash(mix docs:*)"
     ]
   }
 }

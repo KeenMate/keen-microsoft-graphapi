@@ -16,7 +16,7 @@ defmodule Mix.Tasks.Graph.Gen.Schema do
 
   use Mix.Task
 
-  alias MicrosoftGraph.Schema.Generator.{MetadataParser, TypeResolver, CodeGenerator}
+  alias GraphApi.Schema.Generator.{MetadataParser, TypeResolver, CodeGenerator}
 
   @metadata_urls %{
     v1: "https://graph.microsoft.com/v1.0/$metadata",

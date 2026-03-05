@@ -1,4 +1,4 @@
-defmodule MicrosoftGraph.Test.Fixtures do
+defmodule GraphApi.Test.Fixtures do
   @moduledoc """
   Helper for loading JSON fixture files in tests.
   """

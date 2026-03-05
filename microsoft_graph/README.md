@@ -1,4 +1,4 @@
-# MicrosoftGraph
+# GraphApi
 
 Elixir client for the [Microsoft Graph API](https://learn.microsoft.com/en-us/graph/overview).
 
@@ -6,12 +6,12 @@ Built with [Req](https://hexdocs.pm/req) for modern HTTP handling, featuring aut
 
 ## Installation
 
-Add `microsoft_graph` to your list of dependencies in `mix.exs`:
+Add `keen_microsoft_graphapi` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:microsoft_graph, "~> 0.1.0", organization: "keenmate"}
+    {:keen_microsoft_graphapi, "~> 1.0.0-rc.1"}
   ]
 end
 ```
@@ -23,7 +23,7 @@ end
 Add to your `config/runtime.exs`:
 
 ```elixir
-config :microsoft_graph, :config,
+config :keen_microsoft_graphapi, :config,
   tenant_id: System.fetch_env!("AZURE_TENANT_ID"),
   client_id: System.fetch_env!("AZURE_CLIENT_ID"),
   client_secret: System.fetch_env!("AZURE_CLIENT_SECRET")
@@ -32,8 +32,8 @@ config :microsoft_graph, :config,
 Then call any resource module directly:
 
 ```elixir
-{:ok, %{"value" => users}} = MicrosoftGraph.Users.list()
-{:ok, user} = MicrosoftGraph.Users.get("user@contoso.com")
+{:ok, %{"value" => users}} = GraphApi.Users.list()
+{:ok, user} = GraphApi.Users.get("user@contoso.com")
 ```
 
 ### Multi-Tenant Setup
@@ -41,14 +41,14 @@ Then call any resource module directly:
 Build an explicit client for each tenant:
 
 ```elixir
-config = MicrosoftGraph.Config.new!(
+config = GraphApi.Config.new!(
   tenant_id: "tenant-aaa",
   client_id: "client-bbb",
   client_secret: "secret-ccc"
 )
 
-client = MicrosoftGraph.Client.new(config: config)
-{:ok, users} = MicrosoftGraph.Users.list(client: client)
+client = GraphApi.Client.new(config: config)
+{:ok, users} = GraphApi.Users.list(client: client)
 ```
 
 ## OData Queries
@@ -56,7 +56,7 @@ client = MicrosoftGraph.Client.new(config: config)
 Use the functional builder to construct query parameters:
 
 ```elixir
-alias MicrosoftGraph.OData
+alias GraphApi.OData
 
 query = OData.new()
   |> OData.select(["displayName", "mail", "id"])
@@ -64,110 +64,55 @@ query = OData.new()
   |> OData.top(25)
   |> OData.orderby("displayName")
 
-{:ok, response} = MicrosoftGraph.Users.list(query: query)
+{:ok, response} = GraphApi.Users.list(query: query)
 ```
 
 Supported parameters: `$select`, `$filter`, `$expand`, `$top`, `$skip`, `$orderby`, `$count`, `$search`.
 
-The `$filter` value is a raw string since Graph filter syntax is too varied for a DSL.
+### Schema-Aware Filter Builder
 
-## Pagination
-
-Stream-based pagination that lazily follows `@odata.nextLink`:
+Build type-safe `$filter` expressions using snake_case field names from schema modules:
 
 ```elixir
-{:ok, first_page} = MicrosoftGraph.Users.list(client: client)
+alias GraphApi.OData.Filter
+alias GraphApi.Schema.User
 
-# Lazy stream
-all_users = MicrosoftGraph.Pagination.stream(first_page, client: client)
-  |> Enum.to_list()
+# Simple keyword syntax for equality conditions
+query = OData.new()
+  |> OData.filter(User, company_name: "Contoso", account_enabled: true)
+# => $filter=companyName eq 'Contoso' and accountEnabled eq true
 
-# Or collect all at once
-{:ok, all_users} = MicrosoftGraph.Pagination.collect_all(first_page, client: client)
+# Full builder for complex filters
+filter =
+  Filter.new(User)
+  |> Filter.where(:display_name, :starts_with, "A")
+  |> Filter.where(:account_enabled, :eq, true)
+  |> Filter.or_where(:company_name, :eq, "Fabrikam")
+
+OData.new() |> OData.filter(filter)
+# => $filter=startsWith(displayName,'A') and accountEnabled eq true or companyName eq 'Fabrikam'
 ```
 
-## Resource Modules
-
-### Users
-
-```elixir
-{:ok, %{"value" => users}} = MicrosoftGraph.Users.list()
-{:ok, user} = MicrosoftGraph.Users.get("user-id")
-{:ok, user} = MicrosoftGraph.Users.create(%{"displayName" => "Alice", ...})
-{:ok, user} = MicrosoftGraph.Users.update("user-id", %{"jobTitle" => "Engineer"})
-:ok = MicrosoftGraph.Users.delete("user-id")
-{:ok, %{"value" => reports}} = MicrosoftGraph.Users.list_direct_reports("user-id")
-{:ok, %{"value" => groups}} = MicrosoftGraph.Users.list_member_of("user-id")
-```
-
-### Groups
-
-```elixir
-{:ok, %{"value" => groups}} = MicrosoftGraph.Groups.list()
-{:ok, group} = MicrosoftGraph.Groups.get("group-id")
-{:ok, %{"value" => members}} = MicrosoftGraph.Groups.list_members("group-id")
-:ok = MicrosoftGraph.Groups.add_member("group-id", "user-id")
-:ok = MicrosoftGraph.Groups.remove_member("group-id", "user-id")
-```
-
-### Mail
-
-```elixir
-{:ok, %{"value" => messages}} = MicrosoftGraph.Mail.list_messages("user-id")
-{:ok, msg} = MicrosoftGraph.Mail.get_message("user-id", "message-id")
-
-:ok = MicrosoftGraph.Mail.send_mail("user-id", %{
-  subject: "Hello",
-  body: %{contentType: "Text", content: "Hi there"},
-  toRecipients: [%{emailAddress: %{address: "bob@contoso.com"}}]
-})
-
-{:ok, %{"value" => folders}} = MicrosoftGraph.Mail.list_mail_folders("user-id")
-```
-
-### Calendar
-
-```elixir
-{:ok, %{"value" => events}} = MicrosoftGraph.Calendar.list_events("user-id")
-{:ok, event} = MicrosoftGraph.Calendar.create_event("user-id", %{"subject" => "Meeting"})
-
-{:ok, %{"value" => view}} = MicrosoftGraph.Calendar.calendar_view("user-id",
-  start_date_time: "2024-01-01T00:00:00",
-  end_date_time: "2024-01-31T23:59:59"
-)
-
-{:ok, %{"value" => calendars}} = MicrosoftGraph.Calendar.list_calendars("user-id")
-```
-
-### Files (OneDrive/SharePoint)
-
-```elixir
-{:ok, drive} = MicrosoftGraph.Files.get_drive("user-id")
-{:ok, %{"value" => items}} = MicrosoftGraph.Files.list_root_children("drive-id")
-{:ok, item} = MicrosoftGraph.Files.get_item_by_path("drive-id", "Documents/report.docx")
-{:ok, content} = MicrosoftGraph.Files.download_content("drive-id", "item-id")
-{:ok, item} = MicrosoftGraph.Files.upload_small("drive-id", "path/file.txt", content)
-{:ok, session} = MicrosoftGraph.Files.create_upload_session("drive-id", "path/large.zip")
-```
+Supported operators: `:eq`, `:ne`, `:gt`, `:lt`, `:ge`, `:le`, `:starts_with`, `:ends_with`, `:contains`, `:in`, `:is_nil`. Raw string filters still work as a fallback.
 
 ## Schema Casting
 
 All resource functions accept an `:as` option to cast responses into typed Elixir structs:
 
 ```elixir
-alias MicrosoftGraph.Schema.User
+alias GraphApi.Schema.User
 
 # Single item — returns a struct
-{:ok, user} = MicrosoftGraph.Users.get("user-id", as: User)
+{:ok, user} = GraphApi.Users.get("user-id", as: User)
 # => %User{id: "abc", display_name: "Alice", mail: "alice@contoso.com", ...}
 
 # List — casts each item in "value"
-{:ok, %{"value" => users}} = MicrosoftGraph.Users.list(as: User)
+{:ok, %{"value" => users}} = GraphApi.Users.list(as: User)
 # => [%User{}, %User{}, ...]
 
 # Combine with $select — only fetch the fields you need
 query = OData.new() |> OData.select(["id", "displayName", "mail"])
-{:ok, %{"value" => users}} = MicrosoftGraph.Users.list(query: query, as: User)
+{:ok, %{"value" => users}} = GraphApi.Users.list(query: query, as: User)
 # => [%User{id: "abc", display_name: "Alice", mail: "alice@...", job_title: nil, ...}]
 ```
 
@@ -177,14 +122,29 @@ For field projections, define a View module to auto-inject `$select`:
 
 ```elixir
 defmodule MyApp.UserSummary do
-  use MicrosoftGraph.View,
-    schema: MicrosoftGraph.Schema.User,
+  use GraphApi.View,
+    schema: GraphApi.Schema.User,
     fields: [:id, :display_name, :mail]
 end
 
 # Automatically adds $select=id,displayName,mail
-{:ok, %{"value" => users}} = MicrosoftGraph.Users.list(as: MyApp.UserSummary)
+{:ok, %{"value" => users}} = GraphApi.Users.list(as: MyApp.UserSummary)
 # => [%MyApp.UserSummary{id: "abc", display_name: "Alice", mail: "alice@..."}, ...]
+```
+
+## Pagination
+
+Stream-based pagination that lazily follows `@odata.nextLink`:
+
+```elixir
+{:ok, first_page} = GraphApi.Users.list(client: client)
+
+# Lazy stream
+all_users = GraphApi.Pagination.stream(first_page, client: client)
+  |> Enum.to_list()
+
+# Or collect all at once
+{:ok, all_users} = GraphApi.Pagination.collect_all(first_page, client: client)
 ```
 
 ## Batch Requests
@@ -192,8 +152,8 @@ end
 Send up to 20 requests in a single HTTP call using JSON batching. Every resource function has a `_query` variant that returns a `%Batch.Request{}` instead of executing immediately:
 
 ```elixir
-alias MicrosoftGraph.{Batch, OData, Users, Groups, Calendar}
-alias MicrosoftGraph.Schema.{User, Group, Event}
+alias GraphApi.{Batch, OData, Users, Groups, Calendar}
+alias GraphApi.Schema.{User, Group, Event}
 
 query = OData.new() |> OData.select(["id", "displayName"]) |> OData.top(5)
 
@@ -226,18 +186,6 @@ Batch.new()
 |> Batch.execute(client: client)
 ```
 
-### Available `_query` Functions
-
-Every resource function has a corresponding `_query` variant with the same arguments:
-
-| Module | Functions |
-|--------|-----------|
-| `Users` | `list_query`, `get_query`, `create_query`, `update_query`, `delete_query`, `list_direct_reports_query`, `list_member_of_query` |
-| `Groups` | `list_query`, `get_query`, `create_query`, `update_query`, `delete_query`, `list_members_query`, `add_member_query`, `remove_member_query` |
-| `Mail` | `list_messages_query`, `get_message_query`, `send_mail_query`, `create_draft_query`, `delete_message_query`, `list_mail_folders_query`, `list_folder_messages_query` |
-| `Calendar` | `list_events_query`, `get_event_query`, `create_event_query`, `update_event_query`, `delete_event_query`, `calendar_view_query`, `list_calendars_query` |
-| `Files` | `get_drive_query`, `list_root_children_query`, `list_children_query`, `get_item_query`, `get_item_by_path_query`, `download_content_query`, `upload_small_query`, `create_upload_session_query` |
-
 ## Delta Queries
 
 Delta queries let you track incremental changes to resources. Instead of fetching the full dataset every time, you get only what changed since your last sync.
@@ -246,7 +194,7 @@ Delta queries let you track incremental changes to resources. Instead of fetchin
 
 ```elixir
 # Fetch all current users + get a delta_link for future syncs
-{:ok, page} = MicrosoftGraph.Delta.query("/users/delta", client: client)
+{:ok, page} = GraphApi.Delta.query("/users/delta", client: client)
 # page.items => [all current users]
 # page.delta_link => "https://graph...?$deltatoken=..."
 
@@ -257,7 +205,7 @@ Delta queries let you track incremental changes to resources. Instead of fetchin
 
 ```elixir
 # Later, fetch only changes since last sync
-{:ok, changes} = MicrosoftGraph.Delta.query(stored_delta_link, client: client)
+{:ok, changes} = GraphApi.Delta.query(stored_delta_link, client: client)
 
 for item <- changes.items do
   case item do
@@ -280,7 +228,7 @@ save_delta_link(changes.delta_link)
 For initial syncs that span multiple pages, `collect_all/2` follows all `@odata.nextLink` pages automatically:
 
 ```elixir
-{:ok, result} = MicrosoftGraph.Delta.collect_all("/users/delta", client: client)
+{:ok, result} = GraphApi.Delta.collect_all("/users/delta", client: client)
 # result.items => all items across all pages
 # result.delta_link => final delta link for future syncs
 ```
@@ -290,39 +238,12 @@ For initial syncs that span multiple pages, `collect_all/2` follows all `@odata.
 Stream items across pages without loading everything into memory:
 
 ```elixir
-{:ok, first_page} = MicrosoftGraph.Delta.query("/users/delta", client: client)
+{:ok, first_page} = GraphApi.Delta.query("/users/delta", client: client)
 
 first_page
-|> MicrosoftGraph.Delta.stream(client: client)
+|> GraphApi.Delta.stream(client: client)
 |> Stream.filter(fn item -> item["@removed"] == nil end)
 |> Enum.each(&process_user/1)
-```
-
-### Convenience Functions
-
-Each resource module provides delta shortcuts:
-
-```elixir
-# Users
-{:ok, page} = MicrosoftGraph.Users.delta(client: client)
-
-# Groups
-{:ok, page} = MicrosoftGraph.Groups.delta(client: client)
-
-# Group members
-{:ok, page} = MicrosoftGraph.Groups.members_delta("group-id", client: client)
-
-# Mail messages
-{:ok, page} = MicrosoftGraph.Mail.messages_delta("user-id", client: client)
-
-# Mail folder messages
-{:ok, page} = MicrosoftGraph.Mail.folder_messages_delta("user-id", "folder-id", client: client)
-
-# Calendar events
-{:ok, page} = MicrosoftGraph.Calendar.events_delta("user-id", client: client)
-
-# Drive files
-{:ok, page} = MicrosoftGraph.Files.drive_delta("drive-id", client: client)
 ```
 
 ### Schema Casting with Delta
@@ -330,13 +251,13 @@ Each resource module provides delta shortcuts:
 Delta queries support `:as` for schema casting. Deleted items (with `@removed`) are kept as raw maps:
 
 ```elixir
-{:ok, changes} = MicrosoftGraph.Delta.query(delta_link,
+{:ok, changes} = GraphApi.Delta.query(delta_link,
   client: client,
-  as: MicrosoftGraph.Schema.User
+  as: GraphApi.Schema.User
 )
 
 Enum.each(changes.items, fn
-  %MicrosoftGraph.Schema.User{} = user ->
+  %GraphApi.Schema.User{} = user ->
     IO.puts("Updated: #{user.display_name}")
 
   %{"@removed" => _} = removed ->
@@ -344,157 +265,22 @@ Enum.each(changes.items, fn
 end)
 ```
 
-### Batch Variants
-
-All delta convenience functions have `_query` variants for batch requests:
-
-```elixir
-batch =
-  Batch.new()
-  |> Batch.add("1", Users.delta_query())
-  |> Batch.add("2", Groups.delta_query())
-```
-
-## Subscriptions & Webhooks
-
-Subscriptions let Microsoft Graph push change notifications to your application via webhooks.
-
-### Managing Subscriptions
-
-```elixir
-# Create a subscription
-{:ok, sub} = MicrosoftGraph.Subscriptions.create(%{
-  "changeType" => "created,updated,deleted",
-  "notificationUrl" => "https://example.com/webhook",
-  "resource" => "users",
-  "expirationDateTime" => "2025-04-01T00:00:00Z",
-  "clientState" => "my-secret-state"
-})
-
-# List active subscriptions
-{:ok, %{"value" => subs}} = MicrosoftGraph.Subscriptions.list()
-
-# Get a specific subscription
-{:ok, sub} = MicrosoftGraph.Subscriptions.get("subscription-id")
-
-# Renew before expiration
-{:ok, renewed} = MicrosoftGraph.Subscriptions.renew("subscription-id", %{
-  "expirationDateTime" => "2025-05-01T00:00:00Z"
-})
-
-# Delete
-:ok = MicrosoftGraph.Subscriptions.delete("subscription-id")
-```
-
-### Handling Webhooks
-
-Use `MicrosoftGraph.Webhook` in your endpoint to handle validation and notification requests:
-
-```elixir
-# In your Phoenix controller or Plug router
-def webhook(conn, _params) do
-  case MicrosoftGraph.Webhook.classify(conn) do
-    {:validate, token} ->
-      # Microsoft is verifying your endpoint — echo the token back
-      conn
-      |> put_resp_content_type("text/plain")
-      |> send_resp(200, token)
-
-    :notification ->
-      notifications = MicrosoftGraph.Webhook.parse_notifications(conn.body_params)
-
-      for n <- notifications do
-        # Validate clientState to prevent spoofing
-        if MicrosoftGraph.Webhook.valid_client_state?(n, "my-secret-state") do
-          MyApp.NotificationWorker.enqueue(n)
-        end
-      end
-
-      # Must respond within 3 seconds
-      send_resp(conn, 202, "")
-  end
-end
-```
-
-### Batch Variants
-
-All subscription functions have `_query` variants:
-
-```elixir
-batch =
-  Batch.new()
-  |> Batch.add("1", Subscriptions.list_query())
-  |> Batch.add("2", Subscriptions.create_query(%{"resource" => "users", ...}))
-```
-
-## Schema-Aware OData Filter Builder
-
-Build type-safe OData `$filter` expressions using snake_case field names from schema modules. Field names are automatically translated to camelCase API names.
-
-### Simple Keyword Syntax
-
-For equality conditions combined with `and`:
-
-```elixir
-alias MicrosoftGraph.Schema.User
-
-OData.new()
-|> OData.filter(User, company_name: "Contoso", account_enabled: true)
-# => $filter=companyName eq 'Contoso' and accountEnabled eq true
-```
-
-### Filter Builder
-
-For complex filters with different operators, `and`/`or` combinations:
-
-```elixir
-alias MicrosoftGraph.OData.Filter
-
-filter =
-  Filter.new(User)
-  |> Filter.where(:display_name, :starts_with, "A")
-  |> Filter.where(:account_enabled, :eq, true)
-  |> Filter.or_where(:company_name, :eq, "Fabrikam")
-
-OData.new() |> OData.filter(filter)
-# => $filter=startsWith(displayName,'A') and accountEnabled eq true or companyName eq 'Fabrikam'
-```
-
-### Supported Operators
-
-| Operator | Example | OData Output |
-|----------|---------|-------------|
-| `:eq` | `where(:mail, :eq, "a@b.com")` | `mail eq 'a@b.com'` |
-| `:ne` | `where(:job_title, :ne, "Intern")` | `jobTitle ne 'Intern'` |
-| `:gt`, `:lt`, `:ge`, `:le` | `where(:age, :gt, 18)` | `age gt 18` |
-| `:starts_with` | `where(:display_name, :starts_with, "A")` | `startsWith(displayName,'A')` |
-| `:ends_with` | `where(:mail, :ends_with, "@contoso.com")` | `endsWith(mail,'@contoso.com')` |
-| `:contains` | `where(:display_name, :contains, "john")` | `contains(displayName,'john')` |
-| `:in` | `where(:employee_type, :in, ["A", "B"])` | `employeeType in ('A','B')` |
-| `:is_nil` | `where(:mail, :is_nil, true)` | `mail eq null` |
-
-Raw string filters still work as a fallback for expressions the builder doesn't cover:
-
-```elixir
-OData.new() |> OData.filter("department eq 'Engineering' and endsWith(mail,'@contoso.com')")
-```
-
 ## Error Handling
 
 All operations return `{:ok, result}`, `:ok`, or `{:error, error}`:
 
 ```elixir
-case MicrosoftGraph.Users.get("user-id") do
+case GraphApi.Users.get("user-id") do
   {:ok, user} ->
     IO.puts("Found: #{user["displayName"]}")
 
-  {:error, %MicrosoftGraph.Error.ApiError{status: 404}} ->
+  {:error, %GraphApi.Error.ApiError{status: 404}} ->
     IO.puts("User not found")
 
-  {:error, %MicrosoftGraph.Error.AuthError{}} ->
+  {:error, %GraphApi.Error.AuthError{}} ->
     IO.puts("Authentication failed")
 
-  {:error, %MicrosoftGraph.Error.RateLimitError{retry_after: seconds}} ->
+  {:error, %GraphApi.Error.RateLimitError{retry_after: seconds}} ->
     IO.puts("Rate limited, retry after #{seconds}s")
 end
 ```
@@ -506,7 +292,7 @@ For accessing resources on behalf of a signed-in user (delegated permissions), u
 ### Step 1: Redirect to Microsoft Login
 
 ```elixir
-alias MicrosoftGraph.Auth.Delegated
+alias GraphApi.Auth.Delegated
 
 url = Delegated.authorize_url(
   tenant_id: "your-tenant-id",
@@ -552,8 +338,8 @@ url = Delegated.authorize_url(
 Pass the delegated access token via the `:access_token` option:
 
 ```elixir
-{:ok, me} = MicrosoftGraph.Users.get("me", access_token: tokens.access_token)
-{:ok, messages} = MicrosoftGraph.Mail.list_messages("me", access_token: tokens.access_token)
+{:ok, me} = GraphApi.Users.get("me", access_token: tokens.access_token)
+{:ok, messages} = GraphApi.Mail.list_messages("me", access_token: tokens.access_token)
 ```
 
 ## Testing
@@ -567,8 +353,96 @@ test "lists users" do
   end)
 
   client = Req.new(plug: {Req.Test, :my_stub})
-  assert {:ok, %{"value" => [user]}} = MicrosoftGraph.Users.list(client: client)
+  assert {:ok, %{"value" => [user]}} = GraphApi.Users.list(client: client)
   assert user["displayName"] == "Alice"
+end
+```
+
+---
+
+## Resource Modules
+
+### Users
+
+```elixir
+{:ok, %{"value" => users}} = GraphApi.Users.list()
+{:ok, user} = GraphApi.Users.get("user-id")
+{:ok, user} = GraphApi.Users.create(%{"displayName" => "Alice", ...})
+{:ok, user} = GraphApi.Users.update("user-id", %{"jobTitle" => "Engineer"})
+:ok = GraphApi.Users.delete("user-id")
+{:ok, %{"value" => reports}} = GraphApi.Users.list_direct_reports("user-id")
+{:ok, %{"value" => groups}} = GraphApi.Users.list_member_of("user-id")
+```
+
+### Groups
+
+```elixir
+{:ok, %{"value" => groups}} = GraphApi.Groups.list()
+{:ok, group} = GraphApi.Groups.get("group-id")
+{:ok, %{"value" => members}} = GraphApi.Groups.list_members("group-id")
+:ok = GraphApi.Groups.add_member("group-id", "user-id")
+:ok = GraphApi.Groups.remove_member("group-id", "user-id")
+```
+
+### Mail
+
+```elixir
+{:ok, %{"value" => messages}} = GraphApi.Mail.list_messages("user-id")
+{:ok, msg} = GraphApi.Mail.get_message("user-id", "message-id")
+
+:ok = GraphApi.Mail.send_mail("user-id", %{
+  subject: "Hello",
+  body: %{contentType: "Text", content: "Hi there"},
+  toRecipients: [%{emailAddress: %{address: "bob@contoso.com"}}]
+})
+
+{:ok, %{"value" => folders}} = GraphApi.Mail.list_mail_folders("user-id")
+```
+
+### Calendar
+
+```elixir
+{:ok, %{"value" => events}} = GraphApi.Calendar.list_events("user-id")
+{:ok, event} = GraphApi.Calendar.create_event("user-id", %{"subject" => "Meeting"})
+
+{:ok, %{"value" => view}} = GraphApi.Calendar.calendar_view("user-id",
+  start_date_time: "2024-01-01T00:00:00",
+  end_date_time: "2024-01-31T23:59:59"
+)
+
+{:ok, %{"value" => calendars}} = GraphApi.Calendar.list_calendars("user-id")
+```
+
+### Files (OneDrive/SharePoint)
+
+```elixir
+{:ok, drive} = GraphApi.Files.get_drive("user-id")
+{:ok, %{"value" => items}} = GraphApi.Files.list_root_children("drive-id")
+{:ok, item} = GraphApi.Files.get_item_by_path("drive-id", "Documents/report.docx")
+{:ok, content} = GraphApi.Files.download_content("drive-id", "item-id")
+{:ok, item} = GraphApi.Files.upload_small("drive-id", "path/file.txt", content)
+{:ok, session} = GraphApi.Files.create_upload_session("drive-id", "path/large.zip")
+```
+
+### Subscriptions & Webhooks
+
+```elixir
+# Create a subscription
+{:ok, sub} = GraphApi.Subscriptions.create(%{
+  "changeType" => "created,updated,deleted",
+  "notificationUrl" => "https://example.com/webhook",
+  "resource" => "users",
+  "expirationDateTime" => "2025-04-01T00:00:00Z",
+  "clientState" => "my-secret-state"
+})
+
+# Handle webhook notifications
+case GraphApi.Webhook.classify(conn) do
+  {:validate, token} -> send_resp(conn, 200, token)
+  :notification ->
+    notifications = GraphApi.Webhook.parse_notifications(conn.body_params)
+    Enum.each(notifications, &MyApp.NotificationWorker.enqueue/1)
+    send_resp(conn, 202, "")
 end
 ```
 

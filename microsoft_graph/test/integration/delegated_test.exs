@@ -1,4 +1,4 @@
-defmodule MicrosoftGraph.Integration.DelegatedTest do
+defmodule GraphApi.Integration.DelegatedTest do
   @moduledoc """
   Integration tests using a delegated (user) access token.
 
@@ -19,20 +19,20 @@ defmodule MicrosoftGraph.Integration.DelegatedTest do
       """
     end
 
-    client = MicrosoftGraph.Client.new()
+    client = GraphApi.Client.new()
     %{client: client, token: token}
   end
 
   describe "delegated /me endpoint" do
     test "get my profile", %{client: client, token: token} do
-      assert {:ok, me} = MicrosoftGraph.Users.get("me", client: client, access_token: token)
+      assert {:ok, me} = GraphApi.Users.get("me", client: client, access_token: token)
       assert is_binary(me["displayName"])
       IO.puts("  Signed in as: #{me["displayName"]} (#{me["mail"]})")
     end
 
     test "list my mail folders", %{client: client, token: token} do
       assert {:ok, %{"value" => folders}} =
-               MicrosoftGraph.Mail.list_mail_folders("me", client: client, access_token: token)
+               GraphApi.Mail.list_mail_folders("me", client: client, access_token: token)
 
       assert is_list(folders)
       IO.puts("  Found #{length(folders)} mail folders")
@@ -40,7 +40,7 @@ defmodule MicrosoftGraph.Integration.DelegatedTest do
 
     test "list my events", %{client: client, token: token} do
       assert {:ok, %{"value" => events}} =
-               MicrosoftGraph.Calendar.list_events("me", client: client, access_token: token)
+               GraphApi.Calendar.list_events("me", client: client, access_token: token)
 
       assert is_list(events)
       IO.puts("  Found #{length(events)} events")
@@ -48,7 +48,7 @@ defmodule MicrosoftGraph.Integration.DelegatedTest do
 
     test "get my drive", %{client: client, token: token} do
       assert {:ok, drive} =
-               MicrosoftGraph.Files.get_drive("me", client: client, access_token: token)
+               GraphApi.Files.get_drive("me", client: client, access_token: token)
 
       assert is_binary(drive["id"])
       IO.puts("  Drive: #{drive["name"]} (#{drive["driveType"]})")

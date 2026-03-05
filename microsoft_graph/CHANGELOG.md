@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-rc.1] - 2026-03-05
+
+### Changed
+
+- **Package renamed** to `:keen_microsoft_graphapi` (Hex organization: `keenmate`)
+- **Module prefix renamed** from `MicrosoftGraph` to `GraphApi` to follow Elixir naming conventions
+- **Config atom** changed from `:microsoft_graph` to `:keen_microsoft_graphapi`
+
+### Added
+
+- **Files (OneDrive)** — 14 new endpoints (9 → 23 total):
+  `list_drives`, `get_special_folder`, `search`, `create_folder`, `update_item`,
+  `delete_item`, `copy_item`, `list_permissions`, `create_sharing_link`,
+  `add_permission`, `delete_permission`, `list_versions`, `list_thumbnails`,
+  `get_shared_item`
+- **Groups** — 9 new endpoints (17 → 26 total):
+  `list_transitive_member_of`, `get_member_objects`, `get_member_groups`,
+  `check_member_objects`, `check_member_groups`, `list_app_role_assignments`,
+  `add_app_role_assignment`, `remove_app_role_assignment`, `list_permission_grants`
+- **Users** — complete endpoint coverage (30 endpoints) with CRUD, manager hierarchy,
+  memberships, app roles, licenses, authentication methods, photos, and delta queries
+- Schema-aware OData filter builder with snake_case field names
+- Delegated auth flow (OAuth authorization code)
+- Client-request-id header support for request correlation
+- `GRAPH_API_COVERAGE.md` — full endpoint coverage map (101 endpoints implemented)
+
 ## [0.2.0] - 2026-02-25
 
 ### Added
@@ -35,11 +61,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OData query builder (`$select`, `$filter`, `$expand`, `$top`, `$skip`, `$orderby`, `$count`, `$search`)
 - Stream-based pagination following `@odata.nextLink`
 - Resource modules:
-  - `MicrosoftGraph.Users` - users CRUD + directReports, memberOf
-  - `MicrosoftGraph.Groups` - groups CRUD + members management
-  - `MicrosoftGraph.Mail` - messages, sendMail, mailFolders
-  - `MicrosoftGraph.Calendar` - events, calendarView, calendars
-  - `MicrosoftGraph.Files` - drives, items, upload/download
+  - `GraphApi.Users` - users CRUD + directReports, memberOf
+  - `GraphApi.Groups` - groups CRUD + members management
+  - `GraphApi.Mail` - messages, sendMail, mailFolders
+  - `GraphApi.Calendar` - events, calendarView, calendars
+  - `GraphApi.Files` - drives, items, upload/download
 - Typed error structs (`ApiError`, `AuthError`, `RateLimitError`)
 - Retry middleware with `Retry-After` header support
 - Multi-tenant support via explicit client passing
