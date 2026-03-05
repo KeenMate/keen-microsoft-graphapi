@@ -177,6 +177,112 @@ defmodule MicrosoftGraph.Groups do
   @spec renew_query(String.t(), keyword()) :: Batch.Request.t()
   def renew_query(group_id, opts \\ []), do: build_query("POST", "/groups/#{group_id}/renew", nil, opts)
 
+  # ---------------------------------------------------------------------------
+  # Membership introspection
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Lists groups and directory roles the group is a transitive member of.
+  """
+  @spec list_transitive_member_of(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def list_transitive_member_of(group_id, opts \\ []), do: Resource.execute(list_transitive_member_of_query(group_id, opts), opts)
+
+  @doc "Batch query variant of `list_transitive_member_of/2`."
+  @spec list_transitive_member_of_query(String.t(), keyword()) :: Batch.Request.t()
+  def list_transitive_member_of_query(group_id, opts \\ []), do: build_query("GET", "/groups/#{group_id}/transitiveMemberOf", nil, opts)
+
+  @doc """
+  Returns all group and directory role IDs the group is a member of (transitive).
+  """
+  @spec get_member_objects(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def get_member_objects(group_id, attrs, opts \\ []), do: Resource.execute(get_member_objects_query(group_id, attrs, opts), opts)
+
+  @doc "Batch query variant of `get_member_objects/3`."
+  @spec get_member_objects_query(String.t(), map(), keyword()) :: Batch.Request.t()
+  def get_member_objects_query(group_id, attrs, opts \\ []), do: build_query("POST", "/groups/#{group_id}/getMemberObjects", attrs, opts)
+
+  @doc """
+  Returns all group IDs the group is a member of (transitive).
+  """
+  @spec get_member_groups(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def get_member_groups(group_id, attrs, opts \\ []), do: Resource.execute(get_member_groups_query(group_id, attrs, opts), opts)
+
+  @doc "Batch query variant of `get_member_groups/3`."
+  @spec get_member_groups_query(String.t(), map(), keyword()) :: Batch.Request.t()
+  def get_member_groups_query(group_id, attrs, opts \\ []), do: build_query("POST", "/groups/#{group_id}/getMemberGroups", attrs, opts)
+
+  @doc """
+  Checks whether the group is a member of the specified objects.
+  """
+  @spec check_member_objects(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def check_member_objects(group_id, attrs, opts \\ []), do: Resource.execute(check_member_objects_query(group_id, attrs, opts), opts)
+
+  @doc "Batch query variant of `check_member_objects/3`."
+  @spec check_member_objects_query(String.t(), map(), keyword()) :: Batch.Request.t()
+  def check_member_objects_query(group_id, attrs, opts \\ []), do: build_query("POST", "/groups/#{group_id}/checkMemberObjects", attrs, opts)
+
+  @doc """
+  Checks whether the group is a member of the specified groups.
+  """
+  @spec check_member_groups(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def check_member_groups(group_id, attrs, opts \\ []), do: Resource.execute(check_member_groups_query(group_id, attrs, opts), opts)
+
+  @doc "Batch query variant of `check_member_groups/3`."
+  @spec check_member_groups_query(String.t(), map(), keyword()) :: Batch.Request.t()
+  def check_member_groups_query(group_id, attrs, opts \\ []), do: build_query("POST", "/groups/#{group_id}/checkMemberGroups", attrs, opts)
+
+  # ---------------------------------------------------------------------------
+  # App role assignments
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Lists app role assignments for a group.
+  """
+  @spec list_app_role_assignments(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def list_app_role_assignments(group_id, opts \\ []), do: Resource.execute(list_app_role_assignments_query(group_id, opts), opts)
+
+  @doc "Batch query variant of `list_app_role_assignments/2`."
+  @spec list_app_role_assignments_query(String.t(), keyword()) :: Batch.Request.t()
+  def list_app_role_assignments_query(group_id, opts \\ []), do: build_query("GET", "/groups/#{group_id}/appRoleAssignments", nil, opts)
+
+  @doc """
+  Adds an app role assignment to a group.
+  """
+  @spec add_app_role_assignment(String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def add_app_role_assignment(group_id, attrs, opts \\ []), do: Resource.execute(add_app_role_assignment_query(group_id, attrs, opts), opts)
+
+  @doc "Batch query variant of `add_app_role_assignment/3`."
+  @spec add_app_role_assignment_query(String.t(), map(), keyword()) :: Batch.Request.t()
+  def add_app_role_assignment_query(group_id, attrs, opts \\ []), do: build_query("POST", "/groups/#{group_id}/appRoleAssignments", attrs, opts)
+
+  @doc """
+  Removes an app role assignment from a group.
+  """
+  @spec remove_app_role_assignment(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  def remove_app_role_assignment(group_id, assignment_id, opts \\ []), do: Resource.execute(remove_app_role_assignment_query(group_id, assignment_id, opts), opts)
+
+  @doc "Batch query variant of `remove_app_role_assignment/3`."
+  @spec remove_app_role_assignment_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
+  def remove_app_role_assignment_query(group_id, assignment_id, opts \\ []), do: build_query("DELETE", "/groups/#{group_id}/appRoleAssignments/#{assignment_id}", nil, opts)
+
+  # ---------------------------------------------------------------------------
+  # Permission grants
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Lists resource-specific permission grants on a group.
+  """
+  @spec list_permission_grants(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def list_permission_grants(group_id, opts \\ []), do: Resource.execute(list_permission_grants_query(group_id, opts), opts)
+
+  @doc "Batch query variant of `list_permission_grants/2`."
+  @spec list_permission_grants_query(String.t(), keyword()) :: Batch.Request.t()
+  def list_permission_grants_query(group_id, opts \\ []), do: build_query("GET", "/groups/#{group_id}/permissionGrants", nil, opts)
+
+  # ---------------------------------------------------------------------------
+  # Delta
+  # ---------------------------------------------------------------------------
+
   @doc """
   Delta query for groups. Returns changes since the last sync.
 

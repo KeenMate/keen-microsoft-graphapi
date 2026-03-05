@@ -157,6 +157,216 @@ defmodule MicrosoftGraph.Files do
     build_query("POST", "/drives/#{drive_id}/root:/#{encoded_path}:/createUploadSession", body, opts)
   end
 
+  # ---------------------------------------------------------------------------
+  # Drive-level
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Lists all drives available to a user.
+  """
+  @spec list_drives(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def list_drives(user_id, opts \\ []), do: Resource.execute(list_drives_query(user_id, opts), opts)
+
+  @doc "Batch query variant of `list_drives/2`."
+  @spec list_drives_query(String.t(), keyword()) :: Batch.Request.t()
+  def list_drives_query(user_id, opts \\ []), do: build_query("GET", "/users/#{user_id}/drives", nil, opts)
+
+  @doc """
+  Gets a special folder (e.g., "documents", "photos", "approot") in a drive.
+  """
+  @spec get_special_folder(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def get_special_folder(drive_id, name, opts \\ []), do: Resource.execute(get_special_folder_query(drive_id, name, opts), opts)
+
+  @doc "Batch query variant of `get_special_folder/3`."
+  @spec get_special_folder_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
+  def get_special_folder_query(drive_id, name, opts \\ []) do
+    build_query("GET", "/drives/#{drive_id}/special/#{name}", nil, opts)
+  end
+
+  @doc """
+  Searches for items in a drive matching the given query string.
+  """
+  @spec search(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def search(drive_id, query, opts \\ []), do: Resource.execute(search_query(drive_id, query, opts), opts)
+
+  @doc "Batch query variant of `search/3`."
+  @spec search_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
+  def search_query(drive_id, query, opts \\ []) do
+    encoded_query = URI.encode(query)
+    build_query("GET", "/drives/#{drive_id}/root/search(q='#{encoded_query}')", nil, opts)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Item CRUD
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Creates a new folder under the given parent item.
+  """
+  @spec create_folder(String.t(), String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def create_folder(drive_id, parent_item_id, attrs, opts \\ []) do
+    Resource.execute(create_folder_query(drive_id, parent_item_id, attrs, opts), opts)
+  end
+
+  @doc "Batch query variant of `create_folder/4`."
+  @spec create_folder_query(String.t(), String.t(), map(), keyword()) :: Batch.Request.t()
+  def create_folder_query(drive_id, parent_item_id, attrs, opts \\ []) do
+    body = Map.merge(%{"folder" => %{}, "@microsoft.graph.conflictBehavior" => "rename"}, attrs)
+    build_query("POST", "/drives/#{drive_id}/items/#{parent_item_id}/children", body, opts)
+  end
+
+  @doc """
+  Updates a drive item's metadata (name, description, etc.).
+  """
+  @spec update_item(String.t(), String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def update_item(drive_id, item_id, attrs, opts \\ []) do
+    Resource.execute(update_item_query(drive_id, item_id, attrs, opts), opts)
+  end
+
+  @doc "Batch query variant of `update_item/4`."
+  @spec update_item_query(String.t(), String.t(), map(), keyword()) :: Batch.Request.t()
+  def update_item_query(drive_id, item_id, attrs, opts \\ []) do
+    build_query("PATCH", "/drives/#{drive_id}/items/#{item_id}", attrs, opts)
+  end
+
+  @doc """
+  Deletes a drive item.
+  """
+  @spec delete_item(String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  def delete_item(drive_id, item_id, opts \\ []) do
+    Resource.execute(delete_item_query(drive_id, item_id, opts), opts)
+  end
+
+  @doc "Batch query variant of `delete_item/3`."
+  @spec delete_item_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
+  def delete_item_query(drive_id, item_id, opts \\ []) do
+    build_query("DELETE", "/drives/#{drive_id}/items/#{item_id}", nil, opts)
+  end
+
+  @doc """
+  Copies a drive item to a new location. Returns 202 Accepted with an async monitor URL.
+  """
+  @spec copy_item(String.t(), String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def copy_item(drive_id, item_id, attrs, opts \\ []) do
+    Resource.execute(copy_item_query(drive_id, item_id, attrs, opts), opts)
+  end
+
+  @doc "Batch query variant of `copy_item/4`."
+  @spec copy_item_query(String.t(), String.t(), map(), keyword()) :: Batch.Request.t()
+  def copy_item_query(drive_id, item_id, attrs, opts \\ []) do
+    build_query("POST", "/drives/#{drive_id}/items/#{item_id}/copy", attrs, opts)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Permissions
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Lists permissions on a drive item.
+  """
+  @spec list_permissions(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def list_permissions(drive_id, item_id, opts \\ []) do
+    Resource.execute(list_permissions_query(drive_id, item_id, opts), opts)
+  end
+
+  @doc "Batch query variant of `list_permissions/3`."
+  @spec list_permissions_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
+  def list_permissions_query(drive_id, item_id, opts \\ []) do
+    build_query("GET", "/drives/#{drive_id}/items/#{item_id}/permissions", nil, opts)
+  end
+
+  @doc """
+  Creates a sharing link for a drive item.
+  """
+  @spec create_sharing_link(String.t(), String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def create_sharing_link(drive_id, item_id, attrs, opts \\ []) do
+    Resource.execute(create_sharing_link_query(drive_id, item_id, attrs, opts), opts)
+  end
+
+  @doc "Batch query variant of `create_sharing_link/4`."
+  @spec create_sharing_link_query(String.t(), String.t(), map(), keyword()) :: Batch.Request.t()
+  def create_sharing_link_query(drive_id, item_id, attrs, opts \\ []) do
+    build_query("POST", "/drives/#{drive_id}/items/#{item_id}/createLink", attrs, opts)
+  end
+
+  @doc """
+  Invites recipients and adds permissions to a drive item.
+  """
+  @spec add_permission(String.t(), String.t(), map(), keyword()) :: {:ok, map()} | {:error, term()}
+  def add_permission(drive_id, item_id, attrs, opts \\ []) do
+    Resource.execute(add_permission_query(drive_id, item_id, attrs, opts), opts)
+  end
+
+  @doc "Batch query variant of `add_permission/4`."
+  @spec add_permission_query(String.t(), String.t(), map(), keyword()) :: Batch.Request.t()
+  def add_permission_query(drive_id, item_id, attrs, opts \\ []) do
+    build_query("POST", "/drives/#{drive_id}/items/#{item_id}/invite", attrs, opts)
+  end
+
+  @doc """
+  Deletes a permission from a drive item.
+  """
+  @spec delete_permission(String.t(), String.t(), String.t(), keyword()) :: :ok | {:error, term()}
+  def delete_permission(drive_id, item_id, perm_id, opts \\ []) do
+    Resource.execute(delete_permission_query(drive_id, item_id, perm_id, opts), opts)
+  end
+
+  @doc "Batch query variant of `delete_permission/4`."
+  @spec delete_permission_query(String.t(), String.t(), String.t(), keyword()) :: Batch.Request.t()
+  def delete_permission_query(drive_id, item_id, perm_id, opts \\ []) do
+    build_query("DELETE", "/drives/#{drive_id}/items/#{item_id}/permissions/#{perm_id}", nil, opts)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Versions & Thumbnails
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Lists versions of a drive item.
+  """
+  @spec list_versions(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def list_versions(drive_id, item_id, opts \\ []) do
+    Resource.execute(list_versions_query(drive_id, item_id, opts), opts)
+  end
+
+  @doc "Batch query variant of `list_versions/3`."
+  @spec list_versions_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
+  def list_versions_query(drive_id, item_id, opts \\ []) do
+    build_query("GET", "/drives/#{drive_id}/items/#{item_id}/versions", nil, opts)
+  end
+
+  @doc """
+  Lists thumbnails for a drive item.
+  """
+  @spec list_thumbnails(String.t(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def list_thumbnails(drive_id, item_id, opts \\ []) do
+    Resource.execute(list_thumbnails_query(drive_id, item_id, opts), opts)
+  end
+
+  @doc "Batch query variant of `list_thumbnails/3`."
+  @spec list_thumbnails_query(String.t(), String.t(), keyword()) :: Batch.Request.t()
+  def list_thumbnails_query(drive_id, item_id, opts \\ []) do
+    build_query("GET", "/drives/#{drive_id}/items/#{item_id}/thumbnails", nil, opts)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Shared Items
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Gets a shared drive item by its sharing token or encoded sharing URL.
+  """
+  @spec get_shared_item(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def get_shared_item(share_id, opts \\ []), do: Resource.execute(get_shared_item_query(share_id, opts), opts)
+
+  @doc "Batch query variant of `get_shared_item/2`."
+  @spec get_shared_item_query(String.t(), keyword()) :: Batch.Request.t()
+  def get_shared_item_query(share_id, opts \\ []), do: build_query("GET", "/shares/#{share_id}/driveItem", nil, opts)
+
+  # ---------------------------------------------------------------------------
+  # Delta
+  # ---------------------------------------------------------------------------
+
   @doc """
   Delta query for a drive's root folder. Returns file/folder changes since the last sync.
   """
