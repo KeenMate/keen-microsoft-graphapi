@@ -60,15 +60,50 @@ defmodule MicrosoftGraph.OData do
   end
 
   @doc """
-  Sets the `$filter` expression. Accepts a raw OData filter string.
+  Sets the `$filter` expression.
+
+  Accepts a raw OData filter string, a `Filter` struct, or a schema module
+  with keyword conditions for schema-aware filtering.
 
   ## Examples
 
+      # Raw string
       OData.new() |> OData.filter("startsWith(displayName, 'A')")
+
+      # Schema-aware keyword syntax (equality, AND-ed)
+      OData.new() |> OData.filter(User, department: "Engineering", account_enabled: true)
+
+      # Filter builder struct
+      filter = Filter.new(User) |> Filter.where(:display_name, :starts_with, "A")
+      OData.new() |> OData.filter(filter)
   """
-  @spec filter(t(), String.t()) :: t()
+  @spec filter(t(), String.t() | MicrosoftGraph.OData.Filter.t()) :: t()
+  def filter(%__MODULE__{} = query, %MicrosoftGraph.OData.Filter{} = filter_builder) do
+    %{query | filter: MicrosoftGraph.OData.Filter.to_string(filter_builder)}
+  end
+
   def filter(%__MODULE__{} = query, expression) when is_binary(expression) do
     %{query | filter: expression}
+  end
+
+  @doc """
+  Sets the `$filter` expression using a schema module and keyword conditions.
+
+  Each keyword is a snake_case field name from the schema, matched with `eq`.
+  Multiple conditions are combined with `and`.
+
+  ## Examples
+
+      alias MicrosoftGraph.Schema.User
+
+      OData.new()
+      |> OData.filter(User, department: "Engineering", account_enabled: true)
+      # => $filter=department eq 'Engineering' and accountEnabled eq true
+  """
+  @spec filter(t(), module(), keyword()) :: t()
+  def filter(%__MODULE__{} = query, schema, conditions)
+      when is_atom(schema) and is_list(conditions) do
+    %{query | filter: MicrosoftGraph.OData.Filter.from_keywords(schema, conditions)}
   end
 
   @doc """

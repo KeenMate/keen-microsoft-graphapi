@@ -427,6 +427,58 @@ batch =
   |> Batch.add("2", Subscriptions.create_query(%{"resource" => "users", ...}))
 ```
 
+## Schema-Aware OData Filter Builder
+
+Build type-safe OData `$filter` expressions using snake_case field names from schema modules. Field names are automatically translated to camelCase API names.
+
+### Simple Keyword Syntax
+
+For equality conditions combined with `and`:
+
+```elixir
+alias MicrosoftGraph.Schema.User
+
+OData.new()
+|> OData.filter(User, company_name: "Contoso", account_enabled: true)
+# => $filter=companyName eq 'Contoso' and accountEnabled eq true
+```
+
+### Filter Builder
+
+For complex filters with different operators, `and`/`or` combinations:
+
+```elixir
+alias MicrosoftGraph.OData.Filter
+
+filter =
+  Filter.new(User)
+  |> Filter.where(:display_name, :starts_with, "A")
+  |> Filter.where(:account_enabled, :eq, true)
+  |> Filter.or_where(:company_name, :eq, "Fabrikam")
+
+OData.new() |> OData.filter(filter)
+# => $filter=startsWith(displayName,'A') and accountEnabled eq true or companyName eq 'Fabrikam'
+```
+
+### Supported Operators
+
+| Operator | Example | OData Output |
+|----------|---------|-------------|
+| `:eq` | `where(:mail, :eq, "a@b.com")` | `mail eq 'a@b.com'` |
+| `:ne` | `where(:job_title, :ne, "Intern")` | `jobTitle ne 'Intern'` |
+| `:gt`, `:lt`, `:ge`, `:le` | `where(:age, :gt, 18)` | `age gt 18` |
+| `:starts_with` | `where(:display_name, :starts_with, "A")` | `startsWith(displayName,'A')` |
+| `:ends_with` | `where(:mail, :ends_with, "@contoso.com")` | `endsWith(mail,'@contoso.com')` |
+| `:contains` | `where(:display_name, :contains, "john")` | `contains(displayName,'john')` |
+| `:in` | `where(:employee_type, :in, ["A", "B"])` | `employeeType in ('A','B')` |
+| `:is_nil` | `where(:mail, :is_nil, true)` | `mail eq null` |
+
+Raw string filters still work as a fallback for expressions the builder doesn't cover:
+
+```elixir
+OData.new() |> OData.filter("department eq 'Engineering' and endsWith(mail,'@contoso.com')")
+```
+
 ## Error Handling
 
 All operations return `{:ok, result}`, `:ok`, or `{:error, error}`:

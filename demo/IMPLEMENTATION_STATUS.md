@@ -167,30 +167,26 @@ Webhook.valid_client_state?(notification, secret)  # => boolean
 
 - 10 subscription tests + 10 webhook tests
 
-### 5. Schema-Aware OData Filter Builder — Pending
+### 5. Schema-Aware OData Filter Builder — Done
 
-Extend `MicrosoftGraph.OData` with a filter helper that uses schema field mappings to auto-translate snake_case atoms to camelCase API field names.
+Module: `MicrosoftGraph.OData.Filter` + `OData.filter/3` overload.
 
 ```elixir
-# Today (raw string, must know camelCase names):
-OData.filter(query, "department eq 'Engineering' and accountEnabled eq true")
+# Simple keyword syntax (equality, AND-ed)
+OData.filter(query, User, company_name: "Contoso", account_enabled: true)
 
-# New (schema-aware, uses snake_case atoms):
-import MicrosoftGraph.OData.Filter
-
-query
-|> OData.filter(User, fn u ->
-  u.department == "Engineering" and u.account_enabled == true
-end)
-
-# Or a simpler keyword-based API:
-OData.filter(query, User, department: "Engineering", account_enabled: true)
+# Builder syntax for complex filters
+Filter.new(User)
+|> Filter.where(:display_name, :starts_with, "A")
+|> Filter.where(:account_enabled, :eq, true)
+|> Filter.or_where(:company_name, :eq, "Fabrikam")
 ```
 
-- Uses `__field_mapping__/0` from schema modules to convert field names
-- Supports common operators: `eq`, `ne`, `gt`, `lt`, `ge`, `le`, `startsWith`, `endsWith`, `contains`
-- Supports `and`/`or`/`not` combinators
-- Raw string filter still works as fallback for complex expressions
+- Uses `__field_mapping__/0` from schema modules to translate snake_case → camelCase
+- Supports: `eq`, `ne`, `gt`, `lt`, `ge`, `le`, `starts_with`, `ends_with`, `contains`, `in`, `is_nil`
+- `and`/`or` combinators via `where`/`or_where`
+- Raw string filter still works as fallback
+- 23 tests
 
 ### 6. Delegated Auth Flow (OAuth Authorization Code) — Pending
 
