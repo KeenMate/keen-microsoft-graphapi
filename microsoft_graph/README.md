@@ -499,6 +499,63 @@ case MicrosoftGraph.Users.get("user-id") do
 end
 ```
 
+## Delegated Auth (OAuth Authorization Code Flow)
+
+For accessing resources on behalf of a signed-in user (delegated permissions), use the authorization code flow:
+
+### Step 1: Redirect to Microsoft Login
+
+```elixir
+alias MicrosoftGraph.Auth.Delegated
+
+url = Delegated.authorize_url(
+  tenant_id: "your-tenant-id",
+  client_id: "your-client-id",
+  redirect_uri: "http://localhost:4000/auth/callback",
+  scope: "User.Read Mail.Read offline_access",
+  state: generate_csrf_token()
+)
+
+# Redirect the user to this URL
+```
+
+### Step 2: Exchange Code for Tokens
+
+```elixir
+# In your callback handler
+{:ok, tokens} = Delegated.exchange_code(
+  tenant_id: "your-tenant-id",
+  client_id: "your-client-id",
+  client_secret: "your-client-secret",
+  code: params["code"],
+  redirect_uri: "http://localhost:4000/auth/callback"
+)
+
+# tokens.access_token — use for API calls
+# tokens.refresh_token — store for refreshing later
+# tokens.expires_in — seconds until expiry
+```
+
+### Step 3: Refresh When Expired
+
+```elixir
+{:ok, new_tokens} = Delegated.refresh_token(
+  tenant_id: "your-tenant-id",
+  client_id: "your-client-id",
+  client_secret: "your-client-secret",
+  refresh_token: stored_refresh_token
+)
+```
+
+### Using the Token
+
+Pass the delegated access token via the `:access_token` option:
+
+```elixir
+{:ok, me} = MicrosoftGraph.Users.get("me", access_token: tokens.access_token)
+{:ok, messages} = MicrosoftGraph.Mail.list_messages("me", access_token: tokens.access_token)
+```
+
 ## Testing
 
 The library uses [Req.Test](https://hexdocs.pm/req/Req.Test.html) for stubbing HTTP calls in tests. Pass a pre-configured Req client via the `client:` option:

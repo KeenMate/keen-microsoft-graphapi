@@ -16,5 +16,9 @@ defmodule DemoWeb.Router do
     pipe_through :browser
 
     live "/", ExplorerLive
+
+    get "/auth/login", AuthController, :login
+    get "/auth/callback", AuthController, :callback
+    get "/auth/logout", AuthController, :logout
   end
 end

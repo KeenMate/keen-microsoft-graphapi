@@ -39,6 +39,7 @@ defmodule DemoWeb.ExplorerLive.Components do
   attr :selected_endpoint, Entry, default: nil
   attr :params, :map, required: true
   attr :loading, :boolean, default: false
+  attr :delegated_signed_in, :boolean, default: false
 
   def param_builder(assigns) do
     ~H"""
@@ -102,6 +103,17 @@ defmodule DemoWeb.ExplorerLive.Components do
               placeholder="Any valid Bearer token (user or app)"
               phx-debounce="300"
             />
+          </div>
+          <div class="param-field" style="display: flex; gap: 0.5rem; align-items: center;">
+            <a href="/auth/login" class="btn btn-primary" style="text-decoration: none; padding: 0.4rem 0.8rem; background: #0078d4; color: #fff; border-radius: 4px; font-size: 0.85rem;">
+              Sign in with Microsoft
+            </a>
+            <a :if={@delegated_signed_in} href="/auth/logout" style="font-size: 0.85rem; color: #666;">
+              Sign out
+            </a>
+            <span :if={@delegated_signed_in} style="font-size: 0.8rem; color: #107c10;">
+              Signed in (delegated token active)
+            </span>
           </div>
         </div>
 

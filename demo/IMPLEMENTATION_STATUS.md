@@ -188,20 +188,21 @@ Filter.new(User)
 - Raw string filter still works as fallback
 - 23 tests
 
-### 6. Delegated Auth Flow (OAuth Authorization Code) — Pending
+### 6. Delegated Auth Flow (OAuth Authorization Code) — Done
 
-New module: `MicrosoftGraph.Auth.Delegated`
+Module: `MicrosoftGraph.Auth.Delegated` with `authorize_url/1`, `exchange_code/1`, `refresh_token/1`.
 
 ```elixir
 url = Delegated.authorize_url(tenant_id: ..., client_id: ..., redirect_uri: ..., scope: "User.Read", state: ...)
 {:ok, tokens} = Delegated.exchange_code(tenant_id: ..., client_id: ..., client_secret: ..., code: ..., redirect_uri: ...)
-{:ok, tokens} = Delegated.refresh_token(...)
+{:ok, tokens} = Delegated.refresh_token(tenant_id: ..., client_id: ..., client_secret: ..., refresh_token: ...)
 ```
 
 Demo app changes:
-- `AuthController` with `/auth/login` (redirect to Microsoft) and `/auth/callback` (exchange code, store token)
-- "Sign in with Microsoft" button in auth section of the UI
-- Token auto-populated in access_token field after successful sign-in
+- `AuthController` with `/auth/login`, `/auth/callback`, `/auth/logout` routes
+- "Sign in with Microsoft" button in auth section + "Sign out" link
+- Delegated access token auto-populated from session after successful sign-in
+- 9 tests
 
 ## How to Run
 

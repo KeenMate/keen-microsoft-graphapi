@@ -6,7 +6,7 @@ defmodule DemoWeb.ExplorerLive do
   import DemoWeb.ExplorerLive.Components
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
     grouped = EndpointCatalog.grouped()
     first_entry = grouped |> List.first() |> elem(1) |> List.first()
 
@@ -17,11 +17,19 @@ defmodule DemoWeb.ExplorerLive do
       |> maybe_put_env("client_id", "AZURE_CLIENT_ID")
       |> maybe_put_env("client_secret", "AZURE_CLIENT_SECRET")
 
+    # If a delegated access token exists in session, pre-fill it
+    initial_params =
+      case session["delegated_access_token"] do
+        nil -> initial_params
+        token -> Map.put(initial_params, "access_token", token)
+      end
+
     {:ok,
      assign(socket,
        grouped_endpoints: grouped,
        selected_endpoint: first_entry,
        params: initial_params,
+       delegated_signed_in: session["delegated_access_token"] != nil,
        result: nil,
        error: nil,
        metadata: nil,
@@ -49,6 +57,7 @@ defmodule DemoWeb.ExplorerLive do
         selected_endpoint={@selected_endpoint}
         params={@params}
         loading={@loading}
+        delegated_signed_in={@delegated_signed_in}
       />
       <.result_display
         result={@result}
@@ -98,6 +107,7 @@ defmodule DemoWeb.ExplorerLive do
     merged = Map.merge(socket.assigns.params, clean)
     {:noreply, assign(socket, params: merged)}
   end
+
 
   def handle_event("execute", _params, socket) do
     entry = socket.assigns.selected_endpoint
