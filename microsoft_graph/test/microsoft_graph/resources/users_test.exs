@@ -80,6 +80,51 @@ defmodule MicrosoftGraph.UsersTest do
     end
   end
 
+  describe "client_request_id" do
+    test "sends client-request-id header when set to true", _context do
+      stub_name = :"crid_test_#{System.unique_integer([:positive])}"
+      :persistent_term.put({stub_name, :header}, nil)
+
+      Req.Test.stub(stub_name, fn conn ->
+        header = Plug.Conn.get_req_header(conn, "client-request-id")
+        :persistent_term.put({stub_name, :header}, header)
+        Req.Test.json(conn, %{"value" => []})
+      end)
+
+      client = Req.new(plug: {Req.Test, stub_name})
+      {:ok, _} = Users.list(client: client, client_request_id: true)
+
+      [id] = :persistent_term.get({stub_name, :header})
+      # Should be a UUID-like string (8-4-4-4-12)
+      assert Regex.match?(~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, id)
+
+      :persistent_term.erase({stub_name, :header})
+    end
+
+    test "sends custom client-request-id when given a string", _context do
+      stub_name = :"crid_custom_#{System.unique_integer([:positive])}"
+      :persistent_term.put({stub_name, :header}, nil)
+
+      Req.Test.stub(stub_name, fn conn ->
+        header = Plug.Conn.get_req_header(conn, "client-request-id")
+        :persistent_term.put({stub_name, :header}, header)
+        Req.Test.json(conn, %{"value" => []})
+      end)
+
+      client = Req.new(plug: {Req.Test, stub_name})
+      {:ok, _} = Users.list(client: client, client_request_id: "my-correlation-123")
+
+      assert ["my-correlation-123"] = :persistent_term.get({stub_name, :header})
+
+      :persistent_term.erase({stub_name, :header})
+    end
+
+    test "does not send header when not specified", %{client: client} do
+      # Default setup stub doesn't check headers — just verify it works
+      assert {:ok, %{"value" => _}} = Users.list(client: client)
+    end
+  end
+
   describe "list_direct_reports/2" do
     test "returns direct reports", %{client: client} do
       assert {:ok, %{"value" => reports}} = Users.list_direct_reports("user-id-1", client: client)

@@ -69,6 +69,7 @@ defmodule MicrosoftGraph.Resource do
     req_opts =
       [url: resolve_url(path, opts), params: build_params(opts)]
       |> maybe_put_token(opts)
+      |> maybe_put_request_id(opts)
 
     client
     |> Req.get(req_opts)
@@ -87,6 +88,7 @@ defmodule MicrosoftGraph.Resource do
     req_opts =
       [url: resolve_url(path, opts), params: build_params(opts)]
       |> maybe_put_token(opts)
+      |> maybe_put_request_id(opts)
       |> maybe_put_json(body)
 
     client
@@ -106,6 +108,7 @@ defmodule MicrosoftGraph.Resource do
     req_opts =
       [url: resolve_url(path, opts), json: body, params: build_params(opts)]
       |> maybe_put_token(opts)
+      |> maybe_put_request_id(opts)
 
     client
     |> Req.patch(req_opts)
@@ -124,6 +127,7 @@ defmodule MicrosoftGraph.Resource do
     req_opts =
       [url: resolve_url(path, opts)]
       |> maybe_put_token(opts)
+      |> maybe_put_request_id(opts)
 
     client
     |> Req.delete(req_opts)
@@ -179,6 +183,39 @@ defmodule MicrosoftGraph.Resource do
       nil -> req_opts
       token -> Keyword.put(req_opts, :access_token, token)
     end
+  end
+
+  defp maybe_put_request_id(req_opts, opts) do
+    case Keyword.get(opts, :client_request_id) do
+      nil ->
+        req_opts
+
+      true ->
+        id = generate_uuid()
+        put_header(req_opts, "client-request-id", id)
+
+      id when is_binary(id) ->
+        put_header(req_opts, "client-request-id", id)
+    end
+  end
+
+  defp put_header(req_opts, name, value) do
+    headers = Keyword.get(req_opts, :headers, [])
+    Keyword.put(req_opts, :headers, [{name, value} | headers])
+  end
+
+  defp generate_uuid do
+    <<a::32, b::16, c::16, d::16, e::48>> = :crypto.strong_rand_bytes(16)
+
+    [
+      Integer.to_string(a, 16) |> String.pad_leading(8, "0"),
+      Integer.to_string(b, 16) |> String.pad_leading(4, "0"),
+      Integer.to_string(c, 16) |> String.pad_leading(4, "0"),
+      Integer.to_string(d, 16) |> String.pad_leading(4, "0"),
+      Integer.to_string(e, 16) |> String.pad_leading(12, "0")
+    ]
+    |> Enum.join("-")
+    |> String.downcase()
   end
 
   defp maybe_put_json(req_opts, nil), do: req_opts
