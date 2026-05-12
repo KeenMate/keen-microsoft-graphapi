@@ -2,7 +2,7 @@ defmodule GraphApi.MixProject do
   use Mix.Project
 
   @version "1.0.0-rc.1"
-  @source_url "https://github.com/KeenMate/keen-microsoft-graphapi.git"
+  @source_url "https://github.com/KeenMate/keen-microsoft-graphapi"
 
   def project do
     [
